@@ -4,4 +4,3 @@ openai
 python-dotenv
 pypdf
 
-gradio_client==0.10.1
