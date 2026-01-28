@@ -51,9 +51,12 @@ def chat_function(message, history):
     # Assemble the conversation history for the AI
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     
-    # Gradio history comes in as a list of dictionaries in 'messages' format
-    for turn in history:
-        messages.append(turn)
+    # Gradio ChatInterface history comes as list of tuples (user, bot)
+    for user_msg, bot_msg in history:
+        if user_msg:
+            messages.append({"role": "user", "content": user_msg})
+        if bot_msg:
+            messages.append({"role": "assistant", "content": bot_msg})
     
     messages.append({"role": "user", "content": message})
 
