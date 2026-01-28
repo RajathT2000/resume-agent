@@ -10,7 +10,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const chatInput = document.getElementById('chatInput');
     chatInput.addEventListener('keypress', handleKeyPress);
+    
+    // Animate elements on page load
+    animateOnLoad();
 });
+
+// Animate elements on page load
+function animateOnLoad() {
+    const elements = document.querySelectorAll('.header-content, .welcome-banner, .main-content, .chat-section');
+    elements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+}
 
 // Welcome Modal Handler
 function handleWelcomeSubmit(e) {
@@ -20,7 +37,13 @@ function handleWelcomeSubmit(e) {
     
     // Hide modal, show main app
     document.getElementById('welcomeModal').classList.add('hidden');
-    document.getElementById('mainApp').classList.remove('hidden');
+    const mainApp = document.getElementById('mainApp');
+    mainApp.classList.remove('hidden');
+    
+    // Animate main app appearance
+    setTimeout(() => {
+        animateOnLoad();
+    }, 100);
     
     // Update welcome banner
     const welcomeText = document.getElementById('welcomeText');
@@ -30,10 +53,20 @@ function handleWelcomeSubmit(e) {
     analyzeCompanyFit();
 }
 
-// Toggle Section Visibility
-function toggleSection(sectionId) {
-    const section = document.getElementById(sectionId);
-    section.classList.toggle('hidden');
+// Switch Tabs
+function switchTab(tabName) {
+    // Remove active class from all tabs and contents
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Add active class to selected tab and content
+    const tabBtn = document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
+    const tabContent = document.getElementById(tabName);
+    
+    if (tabBtn && tabContent) {
+        tabBtn.classList.add('active');
+        tabContent.classList.add('active');
+    }
 }
 
 // Analyze Company Fit
@@ -160,7 +193,7 @@ function sendExample(exampleText) {
 function addMessageToChat(role, content) {
     const chatMessages = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${role}`;
+    messageDiv.className = `message ${role} fade-in`;
     
     const avatar = document.createElement('div');
     avatar.className = 'message-avatar';
@@ -168,7 +201,12 @@ function addMessageToChat(role, content) {
     
     const messageContent = document.createElement('div');
     messageContent.className = 'message-content';
-    messageContent.textContent = content;
+    // Render markdown for assistant messages, plain text for user
+    if (role === 'assistant') {
+        messageContent.innerHTML = markdownToHtml(content);
+    } else {
+        messageContent.textContent = content;
+    }
     
     messageDiv.appendChild(avatar);
     messageDiv.appendChild(messageContent);

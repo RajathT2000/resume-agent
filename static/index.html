@@ -35,7 +35,7 @@
     <div id="mainApp" class="app-container hidden">
         <!-- Header -->
         <header class="header">
-            <div class="container">
+            <div class="container header-content">
                 <h1 class="logo">Rajath's AI Avatar</h1>
                 <p class="tagline">Professional AI-powered career assistant</p>
             </div>
@@ -50,41 +50,44 @@
 
         <!-- Main Content -->
         <main class="container main-content">
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <button class="action-btn" onclick="toggleSection('companyFit')">
+            <!-- Tabs -->
+            <div class="tabs-container">
+                <button class="tab-btn active" onclick="switchTab('companyFit')" id="tabCompanyFit">
                     🎯 Company Fit Analysis
                 </button>
-                <button class="action-btn" onclick="toggleSection('jobAnalysis')">
+                <button class="tab-btn" onclick="switchTab('jobAnalysis')" id="tabJobAnalysis">
                     📋 Job Description Analyzer
                 </button>
             </div>
 
-            <!-- Company Fit Section -->
-            <section id="companyFit" class="section hidden">
-                <div class="section-header">
-                    <h2>🎯 Why Rajath is Perfect for Your Company</h2>
-                    <button class="btn-secondary" onclick="analyzeCompanyFit()">🔄 Refresh Analysis</button>
-                </div>
-                <div id="companyFitResult" class="result-box">
-                    <p class="placeholder">Click "Refresh Analysis" to see personalized insights</p>
-                </div>
-            </section>
+            <!-- Tab Content Container -->
+            <div class="tab-content-wrapper">
+                <!-- Company Fit Section -->
+                <section id="companyFit" class="tab-content active">
+                    <div class="section-header">
+                        <h2>🎯 Why Rajath is Perfect for Your Company</h2>
+                        <button class="btn-secondary" onclick="analyzeCompanyFit()">🔄 Refresh Analysis</button>
+                    </div>
+                    <div id="companyFitResult" class="result-box">
+                        <p class="placeholder">Click "Refresh Analysis" to see personalized insights</p>
+                    </div>
+                </section>
 
-            <!-- Job Analysis Section -->
-            <section id="jobAnalysis" class="section hidden">
-                <div class="section-header">
-                    <h2>📋 Job Description Match Analyzer</h2>
-                </div>
-                <p class="section-description">Paste a job description below and I'll analyze how Rajath's experience matches the requirements</p>
-                <div class="form-group">
-                    <textarea id="jobDescription" rows="8" placeholder="Paste the full job description here..."></textarea>
-                </div>
-                <button class="btn-primary" onclick="analyzeJob()">Analyze Match</button>
-                <div id="jobAnalysisResult" class="result-box hidden">
-                    <div id="jobAnalysisContent"></div>
-                </div>
-            </section>
+                <!-- Job Analysis Section -->
+                <section id="jobAnalysis" class="tab-content">
+                    <div class="section-header">
+                        <h2>📋 Job Description Match Analyzer</h2>
+                    </div>
+                    <p class="section-description">Paste a job description below and I'll analyze how Rajath's experience matches the requirements</p>
+                    <div class="form-group">
+                        <textarea id="jobDescription" rows="8" placeholder="Paste the full job description here..."></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="analyzeJob()">Analyze Match</button>
+                    <div id="jobAnalysisResult" class="result-box hidden">
+                        <div id="jobAnalysisContent"></div>
+                    </div>
+                </section>
+            </div>
 
             <!-- Chat Section -->
             <section class="chat-section">
