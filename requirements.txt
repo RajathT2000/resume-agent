@@ -3,3 +3,5 @@ huggingface_hub==0.19.4
 openai
 python-dotenv
 pypdf
+
+gradio_client==0.10.1

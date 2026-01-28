@@ -343,6 +343,7 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
     app.launch(
         server_name="0.0.0.0",
-        server_port=port,
+        server_port=10000,
         share=True
     )
+
