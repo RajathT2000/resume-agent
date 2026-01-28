@@ -1,24 +1,24 @@
 /* Modern Professional Website Styles */
 :root {
-    /* Professional Color Palette */
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --primary-color: #667eea;
-    --primary-dark: #5568d3;
-    --secondary-color: #764ba2;
-    --accent-color: #f093fb;
-    --text-primary: #1a202c;
-    --text-secondary: #4a5568;
-    --text-light: #718096;
+    /* Modern Teal/Cyan Professional Color Palette */
+    --primary-gradient: linear-gradient(135deg, #0891b2 0%, #0e7490 50%, #155e75 100%);
+    --primary-color: #0891b2;
+    --primary-dark: #0e7490;
+    --secondary-color: #155e75;
+    --accent-color: #06b6d4;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-light: #64748b;
     --bg-primary: #ffffff;
-    --bg-secondary: #f7fafc;
-    --bg-tertiary: #edf2f7;
-    --border-color: #e2e8f0;
-    --success-color: #48bb78;
-    --error-color: #e53e3e;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
-    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.2);
+    --bg-secondary: #f1f5f9;
+    --bg-tertiary: #e2e8f0;
+    --border-color: #cbd5e1;
+    --success-color: #10b981;
+    --error-color: #ef4444;
+    --shadow-sm: 0 1px 3px rgba(8, 145, 178, 0.1);
+    --shadow-md: 0 4px 6px rgba(8, 145, 178, 0.15);
+    --shadow-lg: 0 10px 25px rgba(8, 145, 178, 0.2);
+    --shadow-xl: 0 20px 40px rgba(8, 145, 178, 0.25);
 }
 
 * {
@@ -124,7 +124,7 @@ body {
 .form-group textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
 }
 
 .form-group textarea {
@@ -214,7 +214,7 @@ body {
 
 /* Welcome Banner */
 .welcome-banner {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(8, 145, 178, 0.1) 0%, rgba(14, 116, 144, 0.1) 100%);
     padding: 24px 0;
     border-bottom: 1px solid var(--border-color);
 }
@@ -561,7 +561,7 @@ body {
 .input-wrapper input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
 }
 
 /* Typing Indicator */
