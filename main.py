@@ -340,11 +340,8 @@ Be honest, specific, and actionable. Format clearly with sections."""
     ).then(lambda: "", outputs=msg)
 
 if __name__ == "__main__":
+    import uvicorn
     port = int(os.getenv("PORT", 10000))
-    app.launch(
-        server_name="0.0.0.0",
-        server_port=port,
-        share=False,
-        show_api=False
-    )
+    # Use Gradio's FastAPI app directly for production
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
