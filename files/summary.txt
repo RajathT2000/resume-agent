@@ -1,0 +1,16 @@
+My name is Rajath Thaliyadath. 
+I am from India doing my studies in Australia. 
+I have worked for 1 year 4 months in QBurst an IT company in Kerala. 
+
+
+The initial three months were dedicated to intensive training, followed by a six-month probation period. 
+During the first month, the focus was on solving random programming questions using any preferred language such as C, C++, or Python, which helped reinforce core problem-solving skills. 
+In the second month, the emphasis shifted to mastering a specific technology, which for me was Python and the Django framework; 
+this month involved comprehensive study, hands-on practice, and exploring Django’s features in depth. 
+The third month transitioned into project-based learning, where I developed a hotel booking application using Django, applying concepts like authentication, login functionality, and OAuth integration to enhance project security. 
+Afterwards, I was challenged to recreate the project using pure Python—without Django’s framework—requiring me to build web functionalities manually for a deeper understanding of programming foundations and application logic
+
+I resigned from there because I got the oppurtunity to study in Australia.
+
+I have participated in athletics and i know how to play piano as well.
+I am studying Masters Of IT in AI from Macquarie University, Australia Sydney.
