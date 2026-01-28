@@ -194,8 +194,9 @@ with gr.Blocks(css=custom_css, title=f"Chat with {NAME}'s AI Avatar") as app:
         # Visitor info display (initially hidden, shown after modal)
         visitor_info = gr.Markdown("", visible=False)
         
-        # Chat interface
-        chatbot = gr.Chatbot(label="Conversation", height=500, show_label=True)
+        # Chat interface with initial welcome message
+        welcome_msg = [["", f"👋 Hi! I'm {NAME}'s AI agent. Ask me anything about my experience, skills, or background!"]]
+        chatbot = gr.Chatbot(label="Conversation", height=500, show_label=True, value=welcome_msg)
         
         with gr.Row():
             msg = gr.Textbox(label="Message", placeholder="Ask me anything...", scale=4)
