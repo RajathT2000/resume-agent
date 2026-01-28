@@ -1,9 +1,11 @@
 services:
   - type: web
-    name: resume-agent
-    env: python
-    buildCommand: pip install -r requirements.txt
+    name: rajath-ai-avatar
+    runtime: python-3.11
+    buildCommand: pip install --no-cache-dir -r requirements.txt
     startCommand: python main.py
+    plan: free
+    region: oregon
     envVars:
       - key: OPENAI_API_KEY
         sync: false

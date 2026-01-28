@@ -71,14 +71,13 @@ app = gr.ChatInterface(
     fn=chat_function,
     title=f"Chat with {NAME}'s AI Avatar",
     description=f"Ask me about my experience at QBurst, my AI projects, or my technical skills!",
-    type="messages",
-    examples=["What is your experience with Django?", "Tell me about your AI projects.", "Where did you study?"],
-    theme="soft"
+    examples=["What is your experience with Django?", "Tell me about your AI projects.", "Where did you study?"]
 )
 
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", 7860))
     app.launch(
         server_name="0.0.0.0",
-        server_port=int(os.getenv("PORT", 7860)),
-        share=False
+        server_port=port,
+        share=True
     )
