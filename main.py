@@ -340,10 +340,10 @@ Be honest, specific, and actionable. Format clearly with sections."""
     ).then(lambda: "", outputs=msg)
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 7860))
+    port = int(os.getenv("PORT", 10000))
     app.launch(
         server_name="0.0.0.0",
-        server_port=10000,
-        share=True
+        server_port=port,
+        share=False
     )
 

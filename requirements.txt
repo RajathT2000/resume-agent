@@ -1,5 +1,5 @@
-gradio==4.16.0
-openai
-python-dotenv
-pypdf
+gradio==4.44.0
+openai==2.16.0
+python-dotenv==1.2.1
+pypdf==6.6.2
 
