@@ -14,6 +14,7 @@
     --bg-tertiary: #edf2f7;
     --border-color: #e2e8f0;
     --success-color: #48bb78;
+    --error-color: #e53e3e;
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
@@ -483,36 +484,105 @@ body {
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-/* Loading Overlay */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(5px);
+/* Typing Indicator */
+.typing-indicator {
+    animation: fadeIn 0.3s ease;
+}
+
+.typing-content {
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.typing-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.7;
+    }
+    30% {
+        transform: translateY(-10px);
+        opacity: 1;
+    }
+}
+
+/* Analysis Loading */
+.analysis-loading {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    z-index: 2000;
-    color: white;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
 }
 
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
+.analysis-loading p {
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--text-light);
+}
+
+.loading-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.loading-dots span {
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    background: var(--primary-color);
+    animation: loadingBounce 1.4s infinite ease-in-out;
 }
 
-.loading-overlay p {
-    margin-top: 20px;
-    font-size: 18px;
-    font-weight: 500;
+.loading-dots span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.loading-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes loadingBounce {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.6;
+    }
+    30% {
+        transform: translateY(-12px);
+        opacity: 1;
+    }
 }
 
 /* Animations */

@@ -38,7 +38,12 @@ function toggleSection(sectionId) {
 
 // Analyze Company Fit
 async function analyzeCompanyFit() {
-    showLoading();
+    const resultBox = document.getElementById('companyFitResult');
+    resultBox.innerHTML = '<div class="analysis-loading"><div class="loading-dots"><span></span><span></span><span></span></div><p>Analyzing...</p></div>';
+    
+    // Show section if hidden
+    document.getElementById('companyFit').classList.remove('hidden');
+    
     try {
         const response = await fetch('/api/analyze-company-fit', {
             method: 'POST',
@@ -52,16 +57,10 @@ async function analyzeCompanyFit() {
         });
         
         const data = await response.json();
-        const resultBox = document.getElementById('companyFitResult');
         resultBox.innerHTML = `<div class="analysis-content">${markdownToHtml(data.analysis)}</div>`;
-        
-        // Show section if hidden
-        document.getElementById('companyFit').classList.remove('hidden');
     } catch (error) {
         console.error('Error analyzing company fit:', error);
-        alert('Error analyzing company fit. Please try again.');
-    } finally {
-        hideLoading();
+        resultBox.innerHTML = '<div class="analysis-content"><p style="color: var(--error-color);">Error analyzing company fit. Please try again.</p></div>';
     }
 }
 
@@ -73,7 +72,14 @@ async function analyzeJob() {
         return;
     }
     
-    showLoading();
+    const resultBox = document.getElementById('jobAnalysisResult');
+    const contentBox = document.getElementById('jobAnalysisContent');
+    contentBox.innerHTML = '<div class="analysis-loading"><div class="loading-dots"><span></span><span></span><span></span></div><p>Analyzing job match...</p></div>';
+    resultBox.classList.remove('hidden');
+    
+    // Scroll to result
+    resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
     try {
         const response = await fetch('/api/analyze-job', {
             method: 'POST',
@@ -87,18 +93,10 @@ async function analyzeJob() {
         });
         
         const data = await response.json();
-        const resultBox = document.getElementById('jobAnalysisResult');
-        const contentBox = document.getElementById('jobAnalysisContent');
         contentBox.innerHTML = `<div class="analysis-content">${markdownToHtml(data.analysis)}</div>`;
-        resultBox.classList.remove('hidden');
-        
-        // Scroll to result
-        resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (error) {
         console.error('Error analyzing job:', error);
-        alert('Error analyzing job description. Please try again.');
-    } finally {
-        hideLoading();
+        contentBox.innerHTML = '<div class="analysis-content"><p style="color: var(--error-color);">Error analyzing job description. Please try again.</p></div>';
     }
 }
 
@@ -118,7 +116,9 @@ async function sendMessage() {
     // Add to history
     chatHistory.push({ role: 'user', content: message });
     
-    showLoading();
+    // Show typing indicator (non-blocking)
+    showTypingIndicator();
+    
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
@@ -135,6 +135,9 @@ async function sendMessage() {
         
         const data = await response.json();
         
+        // Remove typing indicator
+        hideTypingIndicator();
+        
         // Add assistant response to UI
         addMessageToChat('assistant', data.response);
         
@@ -142,9 +145,8 @@ async function sendMessage() {
         chatHistory.push({ role: 'assistant', content: data.response });
     } catch (error) {
         console.error('Error sending message:', error);
+        hideTypingIndicator();
         addMessageToChat('assistant', 'Sorry, I encountered an error. Please try again.');
-    } finally {
-        hideLoading();
     }
 }
 
@@ -183,13 +185,34 @@ function handleKeyPress(event) {
     }
 }
 
-// Show/Hide Loading
-function showLoading() {
-    document.getElementById('loadingOverlay').classList.remove('hidden');
+// Show/Hide Typing Indicator
+function showTypingIndicator() {
+    const chatMessages = document.getElementById('chatMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typingIndicator';
+    typingDiv.className = 'message assistant typing-indicator';
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.textContent = '🤖';
+    
+    const typingContent = document.createElement('div');
+    typingContent.className = 'message-content typing-content';
+    typingContent.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+    
+    typingDiv.appendChild(avatar);
+    typingDiv.appendChild(typingContent);
+    chatMessages.appendChild(typingDiv);
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function hideLoading() {
-    document.getElementById('loadingOverlay').classList.add('hidden');
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typingIndicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
 }
 
 // Escape HTML
