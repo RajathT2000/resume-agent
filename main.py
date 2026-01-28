@@ -339,6 +339,12 @@ Be honest, specific, and actionable. Format clearly with sections."""
         outputs=chatbot
     ).then(lambda: "", outputs=msg)
 
+# Avoid Gradio API schema parsing errors in production.
+def disable_api_info(blocks_app):
+    blocks_app.get_api_info = lambda *_args, **_kwargs: {}
+
+disable_api_info(app)
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))
     app.launch(
