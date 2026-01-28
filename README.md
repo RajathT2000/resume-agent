@@ -6,7 +6,9 @@ An AI-powered chatbot that answers questions about Rajath's professional backgro
 - Interactive chat interface powered by Gradio
 - Resume parsing from PDF
 - Natural conversation about professional experience
-- Hosted on Render
+- Personalized responses based on visitor's company
+- Job description match analyzer
+- Company fit analysis
 
 ## Setup
 
@@ -19,17 +21,40 @@ An AI-powered chatbot that answers questions about Rajath's professional backgro
    ```
    OPENAI_API_KEY=your_api_key_here
    ```
-4. Run the application:
+4. Run the application locally:
    ```bash
    python main.py
    ```
 
-## Deployment on Render
+## Deployment on Hugging Face Spaces
 
-This project is configured for deployment on Render. Make sure to:
-1. Set the `OPENAI_API_KEY` environment variable in Render dashboard
-2. The app will automatically use the configuration from `render.yaml`
+This project is optimized for deployment on Hugging Face Spaces:
+
+1. **Create a new Space** on [Hugging Face Spaces](https://huggingface.co/spaces)
+   - Choose "Gradio" as the SDK
+   - Select Python runtime
+
+2. **Connect your GitHub repository** or push code directly
+
+3. **Set your OpenAI API key** as a Secret:
+   - Go to Settings → Secrets
+   - Add `OPENAI_API_KEY` with your API key value
+
+4. **The app will auto-deploy** - HF Spaces detects `app.py` automatically
 
 ## Required Files
 - `files/rajath.pdf` - Resume PDF file
 - `files/summary.txt` - Professional summary
+
+## Local Development
+
+For local testing, run:
+```bash
+python main.py
+```
+
+The app will be available at `http://localhost:7860`
+
+## Environment Variables
+
+- `OPENAI_API_KEY` - Your OpenAI API key (required)

@@ -168,6 +168,8 @@ custom_css = """
 }
 """
 
+# For HF Spaces: CSS in Blocks constructor works fine
+# For local dev: CSS can be passed to launch() in Gradio 6.x
 with gr.Blocks(css=custom_css, title=f"Chat with {NAME}'s AI Avatar") as app:
     
     # Session state
@@ -339,9 +341,7 @@ Be honest, specific, and actionable. Format clearly with sections."""
         outputs=chatbot
     ).then(lambda: "", outputs=msg)
 
+# For local development
 if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 10000))
-    # Use Gradio's FastAPI app directly for production
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    app.launch(server_name="0.0.0.0", server_port=7860, share=False)
 
