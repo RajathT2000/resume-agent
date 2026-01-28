@@ -3,7 +3,7 @@ services:
     name: rajath-ai-avatar
     runtime: python-3.11
     buildCommand: pip install --no-cache-dir -r requirements.txt
-    startCommand: python main.py
+    startCommand: python app.py
     plan: free
     region: oregon
     envVars:
