@@ -2,6 +2,10 @@
 let visitorName = "Guest";
 let visitorCompany = "Unknown";
 let chatHistory = [];
+let projects = [];
+let currentProjectIndex = 0;
+let recognition = null;
+let isListening = false;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -10,6 +14,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const chatInput = document.getElementById('chatInput');
     chatInput.addEventListener('keypress', handleKeyPress);
+    
+    // Initialize voice recognition
+    initVoiceRecognition();
+    
+    // Load stats and projects
+    loadStats();
+    loadProjects();
     
     // Animate elements on page load
     animateOnLoad();
@@ -136,7 +147,7 @@ async function analyzeJob() {
     }
 }
 
-// Send Chat Message
+// Send Chat Message with Streaming/Typing Effect
 async function sendMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
@@ -169,16 +180,66 @@ async function sendMessage() {
             })
         });
         
-        const data = await response.json();
-        
         // Remove typing indicator
         hideTypingIndicator();
         
-        // Add assistant response to UI
-        addMessageToChat('assistant', data.response);
+        // Create message container for streaming
+        const chatMessages = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message assistant fade-in';
         
-        // Add to history
-        chatHistory.push({ role: 'assistant', content: data.response });
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.textContent = '🤖';
+        
+        const messageContent = document.createElement('div');
+        messageContent.className = 'message-content';
+        messageContent.innerHTML = '';
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(messageContent);
+        chatMessages.appendChild(messageDiv);
+        
+        // Stream response with typing effect
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullResponse = '';
+        let buffer = '';
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop() || '';
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        if (data.chunk) {
+                            fullResponse += data.chunk;
+                            // Update message with typing effect
+                            messageContent.innerHTML = markdownToHtml(fullResponse);
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }
+                        if (data.done) {
+                            // Add to history
+                            chatHistory.push({ role: 'assistant', content: data.full_response || fullResponse });
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing stream:', e);
+                    }
+                }
+            }
+        }
+        
+        // Fallback: if streaming fails, add full response
+        if (fullResponse) {
+            chatHistory.push({ role: 'assistant', content: fullResponse });
+        }
     } catch (error) {
         console.error('Error sending message:', error);
         hideTypingIndicator();
@@ -338,4 +399,188 @@ function scrollToChat() {
     setTimeout(() => {
         document.getElementById('chatInput').focus();
     }, 500);
+}
+
+// Load Stats
+async function loadStats() {
+    try {
+        const response = await fetch('/api/stats');
+        const stats = await response.json();
+        
+        // Animate counters
+        animateCounter('statYears', stats.years_experience, 0, 2000);
+        animateCounter('statProjects', stats.projects_count, 0, 2000);
+        animateCounter('statSkills', stats.skills_count, 0, 2000);
+        animateCounter('statCerts', stats.certifications, 0, 2000);
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+// Animate Counter
+function animateCounter(elementId, target, start, duration) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const current = Math.floor(start + (target - start) * easeOut);
+        
+        element.textContent = current;
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        } else {
+            element.textContent = target;
+        }
+    }
+    
+    requestAnimationFrame(update);
+}
+
+// Load Projects
+async function loadProjects() {
+    try {
+        const response = await fetch('/api/projects');
+        const data = await response.json();
+        projects = data.projects || [];
+        renderProjects();
+    } catch (error) {
+        console.error('Error loading projects:', error);
+    }
+}
+
+// Render Projects Carousel
+function renderProjects() {
+    const container = document.getElementById('projectsContainer');
+    const indicators = document.getElementById('carouselIndicators');
+    
+    if (!container || projects.length === 0) return;
+    
+    container.innerHTML = '';
+    indicators.innerHTML = '';
+    
+    projects.forEach((project, index) => {
+        const projectCard = document.createElement('div');
+        projectCard.className = `project-card ${index === 0 ? 'active' : ''}`;
+        projectCard.innerHTML = `
+            <h3>${escapeHtml(project.name)}</h3>
+            <p>${escapeHtml(project.description)}</p>
+            <div class="project-tech">
+                ${project.technologies.map(tech => `<span class="tech-tag">${escapeHtml(tech)}</span>`).join('')}
+            </div>
+        `;
+        container.appendChild(projectCard);
+        
+        const indicator = document.createElement('button');
+        indicator.className = `indicator ${index === 0 ? 'active' : ''}`;
+        indicator.onclick = () => goToProject(index);
+        indicators.appendChild(indicator);
+    });
+}
+
+// Move Carousel
+function moveCarousel(direction) {
+    currentProjectIndex += direction;
+    if (currentProjectIndex < 0) currentProjectIndex = projects.length - 1;
+    if (currentProjectIndex >= projects.length) currentProjectIndex = 0;
+    goToProject(currentProjectIndex);
+}
+
+// Go to Specific Project
+function goToProject(index) {
+    if (index < 0 || index >= projects.length) return;
+    
+    currentProjectIndex = index;
+    const cards = document.querySelectorAll('.project-card');
+    const indicators = document.querySelectorAll('.indicator');
+    
+    cards.forEach((card, i) => {
+        card.classList.toggle('active', i === index);
+    });
+    
+    indicators.forEach((indicator, i) => {
+        indicator.classList.toggle('active', i === index);
+    });
+}
+
+// Initialize Voice Recognition
+function initVoiceRecognition() {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+        
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById('chatInput').value = transcript;
+            stopVoiceInput();
+        };
+        
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            stopVoiceInput();
+        };
+        
+        recognition.onend = () => {
+            stopVoiceInput();
+        };
+    }
+}
+
+// Toggle Voice Input
+function toggleVoiceInput() {
+    if (!recognition) {
+        alert('Voice recognition is not supported in your browser.');
+        return;
+    }
+    
+    if (isListening) {
+        stopVoiceInput();
+    } else {
+        startVoiceInput();
+    }
+}
+
+// Start Voice Input
+function startVoiceInput() {
+    if (!recognition) return;
+    
+    isListening = true;
+    const voiceBtn = document.getElementById('voiceBtn');
+    const voiceStatus = document.getElementById('voiceStatus');
+    
+    voiceBtn.classList.add('listening');
+    voiceStatus.classList.remove('hidden');
+    voiceStatus.textContent = '🎤 Listening... Speak now!';
+    voiceStatus.style.color = 'var(--primary-color)';
+    
+    recognition.start();
+}
+
+// Stop Voice Input
+function stopVoiceInput() {
+    if (!recognition) return;
+    
+    isListening = false;
+    const voiceBtn = document.getElementById('voiceBtn');
+    const voiceStatus = document.getElementById('voiceStatus');
+    
+    voiceBtn.classList.remove('listening');
+    
+    if (recognition) {
+        try {
+            recognition.stop();
+        } catch (e) {}
+    }
+    
+    setTimeout(() => {
+        voiceStatus.classList.add('hidden');
+    }, 2000);
 }

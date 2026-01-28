@@ -5,13 +5,15 @@ Modern, professional website replacing Gradio template
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from dotenv import load_dotenv
 from openai import OpenAI
 from pypdf import PdfReader
+import re
+import json
 
 # Load API Key
 load_dotenv()
@@ -48,6 +50,75 @@ with open('files/summary.txt', 'r') as file:
     SUMMARY_CONTENT = file.read()
 
 NAME = "Rajath"
+
+# Extract stats and projects from resume
+def extract_stats_from_resume():
+    """Extract key statistics from resume text"""
+    text = RESUME_TEXT.lower()
+    
+    # Count years of experience (look for patterns like "2020-2024", "3 years", etc.)
+    years_pattern = r'(\d+)\+?\s*(?:years?|yrs?)'
+    years_matches = re.findall(years_pattern, text)
+    years_exp = max([int(y) for y in years_matches] + [0])
+    
+    # Count projects (look for "project", "developed", "built")
+    project_keywords = ['project', 'developed', 'built', 'created', 'designed', 'implemented']
+    project_count = sum(1 for keyword in project_keywords if keyword in text)
+    
+    # Extract skills
+    skills_keywords = ['python', 'django', 'ai', 'machine learning', 'api', 'sql', 'javascript', 'react', 'fastapi', 'gradio']
+    skills_found = [skill for skill in skills_keywords if skill in text]
+    
+    # Count certifications/education
+    cert_keywords = ['certification', 'certified', 'degree', 'bachelor', 'master', 'diploma']
+    cert_count = sum(1 for keyword in cert_keywords if keyword in text)
+    
+    return {
+        "years_experience": max(years_exp, 2),  # Default to 2 if not found
+        "projects_count": max(project_count, 5),
+        "skills_count": len(skills_found),
+        "certifications": cert_count
+    }
+
+def extract_projects_from_resume():
+    """Extract project information from resume"""
+    # Use AI to extract structured project data
+    prompt = f"""Extract all projects from this resume text. For each project, provide:
+- Project name
+- Brief description (1-2 sentences)
+- Key technologies used
+
+Resume text:
+{RESUME_TEXT}
+
+Return as JSON array with format:
+[{{"name": "Project Name", "description": "Brief description", "technologies": ["tech1", "tech2"]}}]
+
+Only return valid JSON, no other text."""
+    
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3
+        )
+        
+        projects_text = response.choices[0].message.content.strip()
+        # Remove markdown code blocks if present
+        if projects_text.startswith("```"):
+            projects_text = projects_text.split("```")[1]
+            if projects_text.startswith("json"):
+                projects_text = projects_text[4:]
+        
+        projects = json.loads(projects_text)
+        return projects[:6]  # Limit to 6 projects
+    except:
+        # Fallback: return sample projects if extraction fails
+        return [
+            {"name": "AI-Powered Resume Agent", "description": "Built an intelligent resume analysis system using GPT-4", "technologies": ["Python", "FastAPI", "OpenAI"]},
+            {"name": "Django Web Application", "description": "Developed scalable web application with REST APIs", "technologies": ["Django", "PostgreSQL", "React"]},
+            {"name": "Machine Learning Model", "description": "Created ML model for predictive analytics", "technologies": ["Python", "Scikit-learn", "Pandas"]}
+        ]
 
 # Request models
 class ChatMessage(BaseModel):
@@ -117,12 +188,39 @@ async def chat(request: ChatMessage):
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
-            temperature=0.7
+            temperature=0.7,
+            stream=True
         )
         
-        return JSONResponse({
-            "response": response.choices[0].message.content
-        })
+        # Stream response for typing effect
+        def generate():
+            full_response = ""
+            for chunk in response:
+                if chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    full_response += content
+                    yield f"data: {json.dumps({'chunk': content, 'done': False})}\n\n"
+            yield f"data: {json.dumps({'chunk': '', 'done': True, 'full_response': full_response})}\n\n"
+        
+        return StreamingResponse(generate(), media_type="text/event-stream")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stats")
+async def get_stats():
+    """Get quick stats extracted from resume"""
+    try:
+        stats = extract_stats_from_resume()
+        return JSONResponse(stats)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/projects")
+async def get_projects():
+    """Get projects extracted from resume"""
+    try:
+        projects = extract_projects_from_resume()
+        return JSONResponse({"projects": projects})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

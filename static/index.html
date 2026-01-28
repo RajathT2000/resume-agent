@@ -48,6 +48,49 @@
             </div>
         </div>
 
+        <!-- Quick Stats Card -->
+        <section class="stats-section">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-value" id="statYears">0</div>
+                        <div class="stat-label">Years Experience</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🚀</div>
+                        <div class="stat-value" id="statProjects">0</div>
+                        <div class="stat-label">Projects</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💻</div>
+                        <div class="stat-value" id="statSkills">0</div>
+                        <div class="stat-label">Skills</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎓</div>
+                        <div class="stat-value" id="statCerts">0</div>
+                        <div class="stat-label">Certifications</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Project Showcase -->
+        <section class="projects-section">
+            <div class="container">
+                <h2 class="section-title">🌟 Featured Projects</h2>
+                <div class="projects-carousel">
+                    <button class="carousel-btn prev" onclick="moveCarousel(-1)">‹</button>
+                    <div class="projects-container" id="projectsContainer">
+                        <!-- Projects will be loaded here -->
+                    </div>
+                    <button class="carousel-btn next" onclick="moveCarousel(1)">›</button>
+                </div>
+                <div class="carousel-indicators" id="carouselIndicators"></div>
+            </div>
+        </section>
+
         <!-- Main Content -->
         <main class="container main-content">
             <!-- Tabs -->
@@ -104,9 +147,13 @@
                         <button class="example-btn" onclick="sendExample('How would you approach building a scalable API?')">API Design</button>
                     </div>
                     <div class="input-wrapper">
+                        <button id="voiceBtn" class="btn-voice" onclick="toggleVoiceInput()" title="Voice Input">
+                            🎤
+                        </button>
                         <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="handleKeyPress(event)">
                         <button class="btn-send" onclick="sendMessage()">Send</button>
                     </div>
+                    <div id="voiceStatus" class="voice-status hidden"></div>
                 </div>
             </section>
         </main>
