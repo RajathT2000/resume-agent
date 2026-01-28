@@ -195,12 +195,18 @@ async def chat(request: ChatMessage):
         # Stream response for typing effect
         def generate():
             full_response = ""
-            for chunk in response:
-                if chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
-                    full_response += content
-                    yield f"data: {json.dumps({'chunk': content, 'done': False})}\n\n"
-            yield f"data: {json.dumps({'chunk': '', 'done': True, 'full_response': full_response})}\n\n"
+            try:
+                for chunk in response:
+                    if chunk.choices and len(chunk.choices) > 0:
+                        delta = chunk.choices[0].delta
+                        if hasattr(delta, 'content') and delta.content:
+                            content = delta.content
+                            full_response += content
+                            yield f"data: {json.dumps({'chunk': content, 'done': False})}\n\n"
+                yield f"data: {json.dumps({'chunk': '', 'done': True, 'full_response': full_response})}\n\n"
+            except Exception as e:
+                # Fallback: return full response if streaming fails
+                yield f"data: {json.dumps({'chunk': '', 'done': True, 'full_response': full_response or 'Error: Could not generate response.'})}\n\n"
         
         return StreamingResponse(generate(), media_type="text/event-stream")
     except Exception as e:

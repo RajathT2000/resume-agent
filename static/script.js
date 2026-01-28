@@ -200,45 +200,65 @@ async function sendMessage() {
         messageDiv.appendChild(messageContent);
         chatMessages.appendChild(messageDiv);
         
-        // Stream response with typing effect
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let fullResponse = '';
-        let buffer = '';
+        // Check if response is streaming (text/event-stream) or JSON
+        const contentType = response.headers.get('content-type');
         
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+        if (contentType && contentType.includes('text/event-stream')) {
+            // Stream response with typing effect
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullResponse = '';
+            let buffer = '';
             
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop() || '';
-            
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    try {
-                        const data = JSON.parse(line.slice(6));
-                        if (data.chunk) {
-                            fullResponse += data.chunk;
-                            // Update message with typing effect
-                            messageContent.innerHTML = markdownToHtml(fullResponse);
-                            chatMessages.scrollTop = chatMessages.scrollHeight;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n\n');
+                buffer = lines.pop() || '';
+                
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            if (data.chunk) {
+                                fullResponse += data.chunk;
+                                // Update message with typing effect
+                                messageContent.innerHTML = markdownToHtml(fullResponse);
+                                chatMessages.scrollTop = chatMessages.scrollHeight;
+                            }
+                            if (data.done) {
+                                // Add to history
+                                chatHistory.push({ role: 'assistant', content: data.full_response || fullResponse });
+                                return;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing stream:', e);
                         }
-                        if (data.done) {
-                            // Add to history
-                            chatHistory.push({ role: 'assistant', content: data.full_response || fullResponse });
-                            return;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing stream:', e);
                     }
                 }
             }
-        }
-        
-        // Fallback: if streaming fails, add full response
-        if (fullResponse) {
-            chatHistory.push({ role: 'assistant', content: fullResponse });
+            
+            // Fallback: if streaming fails, add full response
+            if (fullResponse) {
+                chatHistory.push({ role: 'assistant', content: fullResponse });
+            }
+        } else {
+            // Fallback to non-streaming response
+            const data = await response.json();
+            const responseText = data.response || '';
+            
+            // Simulate typing effect
+            let typedText = '';
+            for (let i = 0; i < responseText.length; i++) {
+                typedText += responseText[i];
+                messageContent.innerHTML = markdownToHtml(typedText);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                await new Promise(resolve => setTimeout(resolve, 20)); // 20ms delay per character
+            }
+            
+            chatHistory.push({ role: 'assistant', content: responseText });
         }
     } catch (error) {
         console.error('Error sending message:', error);
@@ -481,6 +501,13 @@ function renderProjects() {
         indicator.onclick = () => goToProject(index);
         indicators.appendChild(indicator);
     });
+    
+    // Auto-rotate carousel every 5 seconds
+    if (projects.length > 1) {
+        setInterval(() => {
+            moveCarousel(1);
+        }, 5000);
+    }
 }
 
 // Move Carousel
