@@ -49,6 +49,9 @@ function handleWelcomeSubmit(e) {
     const welcomeText = document.getElementById('welcomeText');
     welcomeText.textContent = `👋 Welcome ${visitorName} from ${visitorCompany}! 🎉`;
     
+    // Show first tab by default
+    switchTab('companyFit');
+    
     // Auto-analyze company fit
     analyzeCompanyFit();
 }
