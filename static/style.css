@@ -164,7 +164,7 @@ body {
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.5s ease;
 }
 
 .btn-secondary:hover {
@@ -180,7 +180,7 @@ body {
     border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.5s ease;
     white-space: nowrap;
 }
 
@@ -250,7 +250,7 @@ body {
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.5s ease;
     color: var(--text-secondary);
     position: relative;
 }
@@ -287,7 +287,7 @@ body {
 
 .tab-content {
     display: none;
-    animation: slideIn 0.4s ease;
+    animation: slideIn 0.8s ease;
 }
 
 .tab-content.active {
@@ -439,7 +439,7 @@ body {
 }
 
 .message.fade-in {
-    animation: fadeIn 0.4s ease;
+    animation: fadeIn 0.8s ease;
 }
 
 .message.user {
@@ -533,7 +533,7 @@ body {
     border-radius: 20px;
     font-size: 13px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.4s ease;
     color: var(--text-primary);
 }
 
@@ -555,7 +555,7 @@ body {
     border-radius: 12px;
     font-size: 16px;
     font-family: inherit;
-    transition: all 0.3s ease;
+    transition: all 0.5s ease;
 }
 
 .input-wrapper input:focus {
@@ -566,7 +566,7 @@ body {
 
 /* Typing Indicator */
 .typing-indicator {
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.6s ease;
 }
 
 .typing-content {
@@ -586,7 +586,7 @@ body {
     height: 8px;
     border-radius: 50%;
     background: var(--text-secondary);
-    animation: typingBounce 1.4s infinite ease-in-out;
+    animation: typingBounce 2s infinite ease-in-out;
 }
 
 .typing-dots span:nth-child(1) {
@@ -707,8 +707,8 @@ body {
     cursor: pointer;
     box-shadow: var(--shadow-lg);
     z-index: 1000;
-    animation: float 3s ease-in-out infinite;
-    transition: all 0.3s ease;
+    animation: float 5s ease-in-out infinite;
+    transition: all 0.5s ease;
 }
 
 .floating-chat-btn:hover {
