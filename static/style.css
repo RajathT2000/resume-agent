@@ -295,12 +295,55 @@ body {
     font-style: italic;
 }
 
-.result-box pre {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    font-family: inherit;
-    line-height: 1.8;
+.analysis-content {
     color: var(--text-primary);
+    line-height: 1.8;
+}
+
+.analysis-content p {
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.analysis-content h1,
+.analysis-content h2,
+.analysis-content h3 {
+    margin-top: 24px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.analysis-content h1 {
+    font-size: 24px;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 8px;
+}
+
+.analysis-content h2 {
+    font-size: 20px;
+    color: var(--primary-color);
+}
+
+.analysis-content h3 {
+    font-size: 18px;
+    color: var(--secondary-color);
+}
+
+.analysis-content ul,
+.analysis-content ol {
+    margin: 16px 0;
+    padding-left: 24px;
+}
+
+.analysis-content li {
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.analysis-content strong {
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
 /* Chat Section */
@@ -499,6 +542,39 @@ body {
     }
 }
 
+/* Floating Chat Button */
+.floating-chat-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 16px 24px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    animation: float 3s ease-in-out infinite;
+    transition: all 0.3s ease;
+}
+
+.floating-chat-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-xl);
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .modal-content {
@@ -540,5 +616,12 @@ body {
 
     .btn-send {
         width: 100%;
+    }
+
+    .floating-chat-btn {
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        font-size: 14px;
     }
 }

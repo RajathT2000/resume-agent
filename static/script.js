@@ -53,7 +53,7 @@ async function analyzeCompanyFit() {
         
         const data = await response.json();
         const resultBox = document.getElementById('companyFitResult');
-        resultBox.innerHTML = `<pre>${escapeHtml(data.analysis)}</pre>`;
+        resultBox.innerHTML = `<div class="analysis-content">${markdownToHtml(data.analysis)}</div>`;
         
         // Show section if hidden
         document.getElementById('companyFit').classList.remove('hidden');
@@ -89,7 +89,7 @@ async function analyzeJob() {
         const data = await response.json();
         const resultBox = document.getElementById('jobAnalysisResult');
         const contentBox = document.getElementById('jobAnalysisContent');
-        contentBox.innerHTML = `<pre>${escapeHtml(data.analysis)}</pre>`;
+        contentBox.innerHTML = `<div class="analysis-content">${markdownToHtml(data.analysis)}</div>`;
         resultBox.classList.remove('hidden');
         
         // Scroll to result
@@ -197,4 +197,81 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Convert Markdown to HTML (simple converter)
+function markdownToHtml(markdown) {
+    if (!markdown) return '';
+    
+    let html = markdown;
+    
+    // Convert headers first (order matters - most specific first)
+    html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+    
+    // Convert bold **text** to <strong>
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    
+    // Split into lines for processing
+    const lines = html.split('\n');
+    const result = [];
+    let inList = false;
+    let listItems = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (!line) {
+            // Empty line - close list if open, add paragraph break
+            if (inList) {
+                result.push('<ul>' + listItems.join('') + '</ul>');
+                listItems = [];
+                inList = false;
+            }
+            continue;
+        }
+        
+        // Check if it's a list item
+        const bulletMatch = line.match(/^[\*\-\+]\s+(.+)$/);
+        const numberMatch = line.match(/^\d+\.\s+(.+)$/);
+        
+        if (bulletMatch || numberMatch) {
+            const content = bulletMatch ? bulletMatch[1] : numberMatch[1];
+            listItems.push('<li>' + content + '</li>');
+            inList = true;
+        } else {
+            // Not a list item
+            if (inList) {
+                result.push('<ul>' + listItems.join('') + '</ul>');
+                listItems = [];
+                inList = false;
+            }
+            
+            // If it's already a tag (header), add as-is
+            if (line.startsWith('<h') || line.startsWith('<p') || line.startsWith('<ul') || line.startsWith('<li')) {
+                result.push(line);
+            } else {
+                // Regular paragraph
+                result.push('<p>' + line + '</p>');
+            }
+        }
+    }
+    
+    // Close any remaining list
+    if (inList) {
+        result.push('<ul>' + listItems.join('') + '</ul>');
+    }
+    
+    return result.join('\n');
+}
+
+// Scroll to chat section
+function scrollToChat() {
+    const chatSection = document.querySelector('.chat-section');
+    chatSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Focus on input after scroll
+    setTimeout(() => {
+        document.getElementById('chatInput').focus();
+    }, 500);
 }
