@@ -208,9 +208,8 @@ with gr.Blocks(css=custom_css, title=f"Chat with {NAME}'s AI Avatar") as app:
             analyze_jd_btn = gr.Button("Analyze Match", variant="primary")
             jd_analysis_output = gr.Markdown("")
         
-        # Chat interface with initial welcome message
-        welcome_msg = [["", f"👋 Hi! I'm {NAME}'s AI agent. Ask me anything about my experience, skills, or background!"]]
-        chatbot = gr.Chatbot(label="💬 Conversation", height=400, show_label=True, value=welcome_msg)
+        # Chat interface
+        chatbot = gr.Chatbot(label="💬 Conversation", height=400, show_label=True)
         
         with gr.Row():
             msg = gr.Textbox(label="Message", placeholder="Ask me anything...", scale=4)
