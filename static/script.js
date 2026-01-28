@@ -63,6 +63,9 @@ function handleWelcomeSubmit(e) {
     // Show first tab by default
     switchTab('companyFit');
     
+    // Load stats and projects (they're already loaded, but ensure they're visible)
+    // Stats and projects load on DOMContentLoaded, so they should be ready
+    
     // Auto-analyze company fit
     analyzeCompanyFit();
 }
