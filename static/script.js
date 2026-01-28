@@ -17,13 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize voice recognition
     initVoiceRecognition();
-    
-    // Load stats and projects
-    loadStats();
-    loadProjects();
-    
-    // Animate elements on page load
-    animateOnLoad();
 });
 
 // Animate elements on page load
@@ -60,11 +53,12 @@ function handleWelcomeSubmit(e) {
     const welcomeText = document.getElementById('welcomeText');
     welcomeText.textContent = `👋 Welcome ${visitorName} from ${visitorCompany}! 🎉`;
     
+    // Load stats and projects
+    loadStats();
+    loadProjects();
+    
     // Show first tab by default
     switchTab('companyFit');
-    
-    // Load stats and projects (they're already loaded, but ensure they're visible)
-    // Stats and projects load on DOMContentLoaded, so they should be ready
     
     // Auto-analyze company fit
     analyzeCompanyFit();
