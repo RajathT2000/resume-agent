@@ -1,14 +1,20 @@
-# Resume Agent - AI Avatar
+# Rajath's AI Avatar - Professional Career Website
 
-An AI-powered chatbot that answers questions about Rajath's professional background, experience, and skills using GPT-4.
+A modern, beautiful website featuring an AI-powered chatbot that answers questions about Rajath's professional background, experience, and skills using GPT-4.
 
 ## Features
-- Interactive chat interface powered by Gradio
-- Resume parsing from PDF
-- Natural conversation about professional experience
-- Personalized responses based on visitor's company
-- Job description match analyzer
-- Company fit analysis
+- 🎨 **Modern, Professional Design** - Beautiful custom website with gradient colors
+- 💬 **Interactive Chat Interface** - Real-time conversation with AI avatar
+- 📄 **Resume Parsing** - Automatic extraction from PDF
+- 🎯 **Company Fit Analysis** - Personalized insights for recruiters
+- 📋 **Job Description Analyzer** - Match score and detailed analysis
+- 🎨 **Responsive Design** - Works perfectly on all devices
+
+## Tech Stack
+- **Backend**: FastAPI (Python)
+- **Frontend**: HTML5, CSS3, JavaScript
+- **AI**: OpenAI GPT-4o-mini
+- **Styling**: Modern gradient design with professional color palette
 
 ## Setup
 
@@ -21,40 +27,43 @@ An AI-powered chatbot that answers questions about Rajath's professional backgro
    ```
    OPENAI_API_KEY=your_api_key_here
    ```
-4. Run the application locally:
+4. Run the application:
    ```bash
-   python main.py
+   python app.py
    ```
+5. Open your browser to `http://localhost:8000`
 
-## Deployment on Hugging Face Spaces
+## Deployment
 
-This project is optimized for deployment on Hugging Face Spaces:
+### Hugging Face Spaces
+1. Create a new Space with **Docker** SDK (or use custom Dockerfile)
+2. Connect your GitHub repository
+3. Set `OPENAI_API_KEY` as a Secret
+4. The app will auto-deploy
 
-1. **Create a new Space** on [Hugging Face Spaces](https://huggingface.co/spaces)
-   - Choose "Gradio" as the SDK
-   - Select Python runtime
+### Render / Railway / Other Platforms
+- Set start command: `python app.py`
+- Set `PORT` environment variable (auto-detected)
+- Add `OPENAI_API_KEY` as environment variable
 
-2. **Connect your GitHub repository** or push code directly
-
-3. **Set your OpenAI API key** as a Secret:
-   - Go to Settings → Secrets
-   - Add `OPENAI_API_KEY` with your API key value
-
-4. **The app will auto-deploy** - HF Spaces detects `app.py` automatically
+## Project Structure
+```
+├── app.py              # FastAPI backend
+├── static/
+│   ├── index.html     # Main HTML page
+│   ├── style.css      # Beautiful modern styles
+│   └── script.js      # Frontend JavaScript
+├── files/
+│   ├── rajath.pdf     # Resume PDF
+│   └── summary.txt    # Professional summary
+└── requirements.txt   # Python dependencies
+```
 
 ## Required Files
 - `files/rajath.pdf` - Resume PDF file
 - `files/summary.txt` - Professional summary
 
-## Local Development
-
-For local testing, run:
-```bash
-python main.py
-```
-
-The app will be available at `http://localhost:7860`
-
 ## Environment Variables
 
 - `OPENAI_API_KEY` - Your OpenAI API key (required)
+- `PORT` - Server port (default: 8000, auto-detected on most platforms)

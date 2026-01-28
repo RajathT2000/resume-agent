@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rajath's AI Avatar - Professional Career Assistant</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Welcome Modal -->
+    <div id="welcomeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>👋 Welcome to Rajath's AI Avatar</h1>
+                <p>Tell me about yourself to get a personalized experience</p>
+            </div>
+            <form id="welcomeForm" class="modal-form">
+                <div class="form-group">
+                    <label for="visitorName">Your Name</label>
+                    <input type="text" id="visitorName" placeholder="e.g., Sarah Johnson" required>
+                </div>
+                <div class="form-group">
+                    <label for="visitorCompany">Company Name</label>
+                    <input type="text" id="visitorCompany" placeholder="e.g., Google, Amazon, or your company" required>
+                </div>
+                <button type="submit" class="btn-primary">🚀 Let's Go!</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App (hidden initially) -->
+    <div id="mainApp" class="app-container hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <h1 class="logo">Rajath's AI Avatar</h1>
+                <p class="tagline">Professional AI-powered career assistant</p>
+            </div>
+        </header>
+
+        <!-- Welcome Banner -->
+        <div id="welcomeBanner" class="welcome-banner">
+            <div class="container">
+                <h2 id="welcomeText"></h2>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="container main-content">
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="action-btn" onclick="toggleSection('companyFit')">
+                    🎯 Company Fit Analysis
+                </button>
+                <button class="action-btn" onclick="toggleSection('jobAnalysis')">
+                    📋 Job Description Analyzer
+                </button>
+            </div>
+
+            <!-- Company Fit Section -->
+            <section id="companyFit" class="section hidden">
+                <div class="section-header">
+                    <h2>🎯 Why Rajath is Perfect for Your Company</h2>
+                    <button class="btn-secondary" onclick="analyzeCompanyFit()">🔄 Refresh Analysis</button>
+                </div>
+                <div id="companyFitResult" class="result-box">
+                    <p class="placeholder">Click "Refresh Analysis" to see personalized insights</p>
+                </div>
+            </section>
+
+            <!-- Job Analysis Section -->
+            <section id="jobAnalysis" class="section hidden">
+                <div class="section-header">
+                    <h2>📋 Job Description Match Analyzer</h2>
+                </div>
+                <p class="section-description">Paste a job description below and I'll analyze how Rajath's experience matches the requirements</p>
+                <div class="form-group">
+                    <textarea id="jobDescription" rows="8" placeholder="Paste the full job description here..."></textarea>
+                </div>
+                <button class="btn-primary" onclick="analyzeJob()">Analyze Match</button>
+                <div id="jobAnalysisResult" class="result-box hidden">
+                    <div id="jobAnalysisContent"></div>
+                </div>
+            </section>
+
+            <!-- Chat Section -->
+            <section class="chat-section">
+                <div class="chat-header">
+                    <h2>💬 Conversation</h2>
+                </div>
+                <div id="chatMessages" class="chat-messages"></div>
+                <div class="chat-input-container">
+                    <div class="example-queries">
+                        <span class="example-label">Try asking:</span>
+                        <button class="example-btn" onclick="sendExample('What is your experience with Django?')">Django Experience</button>
+                        <button class="example-btn" onclick="sendExample('Tell me about your AI projects.')">AI Projects</button>
+                        <button class="example-btn" onclick="sendExample('Where did you study?')">Education</button>
+                        <button class="example-btn" onclick="sendExample('How would you approach building a scalable API?')">API Design</button>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="handleKeyPress(event)">
+                        <button class="btn-send" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Thinking...</p>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
