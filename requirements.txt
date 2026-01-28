@@ -1,5 +1,6 @@
 gradio==4.31.0
 gradio_client==0.16.2
+huggingface_hub==0.19.4
 openai
 python-dotenv
 pypdf
