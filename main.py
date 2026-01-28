@@ -175,32 +175,46 @@ with gr.Blocks(css=custom_css, title=f"Chat with {NAME}'s AI Avatar") as app:
     visitor_company_state = gr.State("Unknown")
     auth_state = gr.State(False)
     
-    # Landing Modal HTML
-    landing_modal = gr.HTML(f"""
-    <div id="landing-modal">
-        <div id="landing-content">
-            <h1>👋 Welcome</h1>
-            <p>Tell us who you are so I can personalize the experience</p>
-        </div>
-    </div>
-    """)
+    # Landing modal form
+    with gr.Group(visible=True) as modal_inputs:
+        with gr.Column():
+            gr.Markdown("# 👋 Welcome to Rajath's AI Avatar")
+            gr.Markdown("### Tell me about yourself to get a personalized experience")
+            name_input = gr.Textbox(label="Your Name", placeholder="e.g., Sarah Johnson", scale=1)
+            company_input = gr.Textbox(label="Company Name", placeholder="e.g., Google, Amazon, or your company", scale=1)
+            modal_submit = gr.Button("🚀 Let's Go!", variant="primary", size="lg")
     
-    main_app = gr.Group(elem_id="main-app", elem_classes="blurred")
-    
-    with main_app:
+    # Main app (hidden until modal is submitted)
+    with gr.Group(visible=False) as main_app:
         gr.Markdown(f"# Chat with {NAME}'s AI Avatar")
         gr.Markdown("Professional AI-powered career assistant for recruiters and hiring managers")
         
-        # Visitor info display (initially hidden, shown after modal)
-        visitor_info = gr.Markdown("", visible=False)
+        # Personalized welcome banner
+        visitor_info = gr.Markdown("")
+        
+        # Why Rajath for Your Company section
+        with gr.Accordion("🎯 Why Rajath is Perfect for Your Company", open=False) as company_fit_accordion:
+            company_fit_analysis = gr.Markdown("Loading analysis...")
+            analyze_fit_btn = gr.Button("🔄 Refresh Analysis", size="sm")
+        
+        # Job Description Analyzer
+        with gr.Accordion("📋 Job Description Match Analyzer", open=False):
+            gr.Markdown("**Paste a job description below and I'll analyze how Rajath's experience matches the requirements**")
+            jd_input = gr.Textbox(
+                label="Job Description", 
+                placeholder="Paste the full job description here...",
+                lines=8
+            )
+            analyze_jd_btn = gr.Button("Analyze Match", variant="primary")
+            jd_analysis_output = gr.Markdown("")
         
         # Chat interface with initial welcome message
         welcome_msg = [["", f"👋 Hi! I'm {NAME}'s AI agent. Ask me anything about my experience, skills, or background!"]]
-        chatbot = gr.Chatbot(label="Conversation", height=500, show_label=True, value=welcome_msg)
+        chatbot = gr.Chatbot(label="💬 Conversation", height=400, show_label=True, value=welcome_msg)
         
         with gr.Row():
             msg = gr.Textbox(label="Message", placeholder="Ask me anything...", scale=4)
-            submit_btn = gr.Button("Send", scale=1)
+            submit_btn = gr.Button("Send", scale=1, variant="primary")
         
         # Examples
         gr.Examples(
@@ -213,23 +227,73 @@ with gr.Blocks(css=custom_css, title=f"Chat with {NAME}'s AI Avatar") as app:
             inputs=msg,
         )
     
-    # Landing modal form (separate, always on top)
-    with gr.Group() as modal_inputs:
-        with gr.Column():
-            gr.Markdown("### Enter Your Details")
-            name_input = gr.Textbox(label="Your Name", placeholder="e.g., John")
-            company_input = gr.Textbox(label="Company Name", placeholder="e.g., Google")
-            modal_submit = gr.Button("Continue →", variant="primary")
+    # Function to analyze company fit
+    def analyze_company_fit(company_name, visitor_name):
+        if not company_name or company_name.lower() == "unknown":
+            return "Please enter your company name to see a personalized analysis."
+        
+        prompt = f"""Analyze why {NAME} would be an excellent fit for {company_name}. 
+        
+Based on this resume context:
+{RESUME_TEXT}
+
+Provide:
+1. Three specific ways {NAME}'s Django/Python/AI skills solve challenges in {company_name}'s domain
+2. Relevant project experience that aligns with {company_name}'s tech stack
+3. Cultural or technical fit insights
+
+Be specific, professional, and concise. Format with bullet points."""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+        
+        return response.choices[0].message.content
+    
+    # Function to analyze job description match
+    def analyze_jd_match(jd_text, company_name):
+        if not jd_text or jd_text.strip() == "":
+            return "⚠️ Please paste a job description to analyze."
+        
+        prompt = f"""You are analyzing how well {NAME} matches this job description for {company_name}.
+
+RAJATH'S RESUME:
+{RESUME_TEXT}
+
+JOB DESCRIPTION:
+{jd_text}
+
+Provide a detailed analysis with:
+1. **Match Score**: X/10 with justification
+2. **Key Strengths**: 3-4 specific skills/experiences that strongly match
+3. **Growth Areas**: 1-2 skills mentioned in the JD that aren't explicitly in the resume, with a 4-week learning roadmap for each
+4. **Unique Value**: What makes {NAME} stand out for this role
+
+Be honest, specific, and actionable. Format clearly with sections."""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+        
+        return response.choices[0].message.content
     
     # Process landing modal submission
     def submit_modal(name, company):
+        welcome_text = f"### 👋 Welcome **{name}** from **{company}**! 🎉"
+        fit_analysis = analyze_company_fit(company, name)
+        
         return (
             name or "Guest",
             company or "Unknown",
             True,
             gr.update(visible=False),  # Hide modal
-            gr.update(elem_classes=""),  # Remove blur
-            gr.update(visible=True, value=f"**Welcome {name or 'Guest'} from {company or 'Unknown'}!** 🎉"),
+            gr.update(visible=True),   # Show main app
+            welcome_text,
+            fit_analysis
         )
     
     modal_submit.click(
@@ -239,10 +303,25 @@ with gr.Blocks(css=custom_css, title=f"Chat with {NAME}'s AI Avatar") as app:
             visitor_name_state,
             visitor_company_state,
             auth_state,
-            landing_modal,
+            modal_inputs,
             main_app,
-            visitor_info
+            visitor_info,
+            company_fit_analysis
         ]
+    )
+    
+    # Refresh company fit analysis
+    analyze_fit_btn.click(
+        analyze_company_fit,
+        inputs=[visitor_company_state, visitor_name_state],
+        outputs=company_fit_analysis
+    )
+    
+    # Analyze JD match
+    analyze_jd_btn.click(
+        analyze_jd_match,
+        inputs=[jd_input, visitor_company_state],
+        outputs=jd_analysis_output
     )
     
     # Chat submission
