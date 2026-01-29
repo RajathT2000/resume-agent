@@ -327,13 +327,14 @@ async function sendMessage() {
                                 updateStreamingMessage(fullResponse, messageContent);
                             }
                             if (data.done) {
-                                // Final update
-                                messageContent.innerHTML = markdownToHtml(data.full_response || fullResponse);
+                                // Final update - remove confidence scores
+                                const cleanedResponse = removeConfidenceScore(data.full_response || fullResponse);
+                                messageContent.innerHTML = markdownToHtml(cleanedResponse);
                                 scrollToBottom();
                                 // Add reaction buttons
                                 setTimeout(() => addReactionButtons(messageId), 500);
-                                // Add to history
-                                chatHistory.push({ role: 'assistant', content: data.full_response || fullResponse });
+                                // Add to history (cleaned)
+                                chatHistory.push({ role: 'assistant', content: cleanedResponse });
                                 return;
                             }
                         } catch (e) {
@@ -350,7 +351,10 @@ async function sendMessage() {
         } else {
             // Fallback to non-streaming response
             const data = await response.json();
-            const responseText = data.response || '';
+            let responseText = data.response || '';
+            
+            // Remove confidence scores
+            responseText = removeConfidenceScore(responseText);
             
             // Optimized typing effect (batched updates)
             let typedText = '';
@@ -457,9 +461,29 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Remove confidence scores from text
+function removeConfidenceScore(text) {
+    if (!text) return text;
+    
+    // Remove patterns like "Confidence Score: 85%", "Confidence: 90%", etc.
+    text = text.replace(/confidence\s*score\s*:?\s*\d+\s*%/gi, '');
+    text = text.replace(/confidence\s*:?\s*\d+\s*%/gi, '');
+    text = text.replace(/\d+\s*%\s*confidence/gi, '');
+    text = text.replace(/confidence\s*level\s*:?\s*\d+\s*%/gi, '');
+    
+    // Clean up extra whitespace
+    text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
+    text = text.trim();
+    
+    return text;
+}
+
 // Convert Markdown to HTML (simple converter)
 function markdownToHtml(markdown) {
     if (!markdown) return '';
+    
+    // Remove confidence scores first
+    markdown = removeConfidenceScore(markdown);
     
     let html = markdown;
     
@@ -1086,7 +1110,9 @@ function updateStreamingMessage(content, messageContent) {
     
     // Batch updates every 50ms instead of every character
     streamingUpdateTimeout = setTimeout(() => {
-        messageContent.innerHTML = markdownToHtml(streamingBuffer);
+        // Remove confidence scores from streaming content
+        const cleanedContent = removeConfidenceScore(streamingBuffer);
+        messageContent.innerHTML = markdownToHtml(cleanedContent);
         scrollToBottom();
         streamingBuffer = '';
     }, 50);
