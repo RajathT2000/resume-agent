@@ -103,8 +103,12 @@ function handleWelcomeSubmit(e) {
         return false;
     }
     
-    visitorName = nameInput.value.trim() || "Guest";
-    visitorCompany = companyInput.value.trim() || "Unknown";
+    visitorName = nameInput.value.trim();
+    visitorCompany = companyInput.value.trim();
+    
+    // Use defaults if empty (HTML5 required should prevent this, but just in case)
+    if (!visitorName) visitorName = "Guest";
+    if (!visitorCompany) visitorCompany = "Unknown";
     
     console.log('Visitor:', visitorName, 'Company:', visitorCompany);
     
