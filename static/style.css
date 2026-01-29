@@ -155,6 +155,10 @@ body {
     transform: translateY(0);
 }
 
+.analyze-btn {
+    margin-top: 20px;
+}
+
 .btn-secondary {
     background: var(--bg-tertiary);
     color: var(--text-primary);
