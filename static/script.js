@@ -45,9 +45,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     const chatInput = document.getElementById('chatInput');
-    chatInput.addEventListener('keypress', handleKeyPress);
-    chatInput.addEventListener('input', handleInputChange);
-    chatInput.addEventListener('keydown', handleKeyDown);
+    if (chatInput) {
+        chatInput.addEventListener('keypress', handleKeyPress);
+        chatInput.addEventListener('input', handleInputChange);
+        chatInput.addEventListener('keydown', handleKeyDown);
+        
+        // Auto-resize textarea
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
     
     // Initialize voice recognition
     initVoiceRecognition();
@@ -63,15 +71,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize conversation search
     initConversationSearch();
-    
-    // Auto-resize textarea
-    const chatInput = document.getElementById('chatInput');
-    if (chatInput) {
-        chatInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
-    }
     
     // Initialize auto-scroll
     initAutoScroll();
