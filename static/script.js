@@ -9,12 +9,6 @@ let autoScrollEnabled = localStorage.getItem('autoScroll') !== 'false';
 let typingIndicatorEnabled = localStorage.getItem('typingIndicator') !== 'false';
 let smartSuggestionsEnabled = localStorage.getItem('smartSuggestions') !== 'false';
 let userScrolledUp = false;
-let messageReactions = {}; // Store reactions in memory
-let chatHistoryIndex = -1; // For arrow key navigation
-let autoScrollEnabled = localStorage.getItem('autoScroll') !== 'false';
-let typingIndicatorEnabled = localStorage.getItem('typingIndicator') !== 'false';
-let smartSuggestionsEnabled = localStorage.getItem('smartSuggestions') !== 'false';
-let userScrolledUp = false;
 let currentInputSuggestion = '';
 let messageReactions = {}; // Store reactions in memory
 let chatHistoryIndex = -1; // For arrow key navigation
