@@ -146,6 +146,11 @@ function handleWelcomeSubmit(e) {
     // Add welcome message to chat
     addWelcomeMessage();
     
+    // Update floating button visibility
+    setTimeout(() => {
+        updateFloatingButtonVisibility();
+    }, 500);
+    
     return false;
 }
 
@@ -548,6 +553,27 @@ function scrollToChat() {
     }, 500);
 }
 
+// Hide/show floating button based on scroll position
+function updateFloatingButtonVisibility() {
+    const floatingBtn = document.getElementById('startChattingBtn');
+    const chatSection = document.querySelector('.chat-section');
+    
+    if (!floatingBtn || !chatSection) return;
+    
+    const chatRect = chatSection.getBoundingClientRect();
+    const isChatVisible = chatRect.top < window.innerHeight && chatRect.bottom > 0;
+    
+    if (isChatVisible) {
+        floatingBtn.style.display = 'none';
+    } else {
+        floatingBtn.style.display = 'block';
+    }
+}
+
+// Add scroll listener to hide/show floating button
+window.addEventListener('scroll', updateFloatingButtonVisibility);
+window.addEventListener('resize', updateFloatingButtonVisibility);
+
 // Initialize Voice Recognition
 function initVoiceRecognition() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -922,7 +948,7 @@ function showTypingIndicator() {
     scrollToBottom();
 }
 
-// 4. Message Reactions
+// 4. Message Reactions (moved to bottom of message)
 function addReactionButtons(messageId) {
     const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
     if (!messageDiv || messageDiv.querySelector('.message-reactions')) return;
@@ -945,7 +971,13 @@ function addReactionButtons(messageId) {
         reactionsDiv.appendChild(btn);
     });
     
-    messageDiv.appendChild(reactionsDiv);
+    // Append to message content div (bottom) instead of message div
+    const messageContent = messageDiv.querySelector('.message-content');
+    if (messageContent) {
+        messageContent.appendChild(reactionsDiv);
+    } else {
+        messageDiv.appendChild(reactionsDiv);
+    }
 }
 
 function toggleReaction(messageId, emoji) {
@@ -1096,10 +1128,22 @@ function initSettings() {
         });
     }
     
-    // Sync dark mode toggle
+    // Sync dark mode toggle button text
     const settingsDarkModeToggle = document.getElementById('settingsDarkModeToggle');
     if (settingsDarkModeToggle) {
-        settingsDarkModeToggle.addEventListener('click', toggleDarkMode);
+        settingsDarkModeToggle.addEventListener('click', function() {
+            toggleDarkMode();
+            // Update button text
+            updateSettingsDarkModeButton();
+        });
+        updateSettingsDarkModeButton();
+    }
+}
+
+function updateSettingsDarkModeButton() {
+    const btn = document.getElementById('settingsDarkModeToggle');
+    if (btn) {
+        btn.textContent = isDarkMode ? 'Disable Dark Mode' : 'Enable Dark Mode';
     }
 }
 

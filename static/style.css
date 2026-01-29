@@ -540,6 +540,47 @@ body {
     gap: 16px;
 }
 
+/* Custom Scrollbar Styling */
+.chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--border-color);
+}
+
+body.dark-mode .chat-messages::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+body.dark-mode .chat-messages::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+}
+
+body.dark-mode .chat-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--border-color);
+}
+
+/* Firefox scrollbar */
+.chat-messages {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bg-tertiary) var(--bg-secondary);
+}
+
+body.dark-mode .chat-messages {
+    scrollbar-color: var(--bg-tertiary) var(--bg-primary);
+}
+
 .message {
     display: flex;
     gap: 12px;
@@ -1034,6 +1075,53 @@ body.dark-mode .floating-chat-btn {
     box-shadow: 0 4px 20px rgba(8, 145, 178, 0.4);
 }
 
+/* Job Description Section Dark Mode */
+body.dark-mode .section-description {
+    color: var(--text-secondary);
+}
+
+body.dark-mode .form-group textarea {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .form-group textarea::placeholder {
+    color: var(--text-light);
+}
+
+body.dark-mode .result-box {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .analysis-content {
+    color: var(--text-primary);
+}
+
+body.dark-mode .analysis-content p {
+    color: var(--text-primary);
+}
+
+body.dark-mode .analysis-content h1,
+body.dark-mode .analysis-content h2,
+body.dark-mode .analysis-content h3 {
+    color: var(--text-primary);
+}
+
+body.dark-mode .analysis-content strong {
+    color: var(--primary-color);
+}
+
+body.dark-mode .analysis-content ul,
+body.dark-mode .analysis-content ol {
+    color: var(--text-primary);
+}
+
+body.dark-mode .analysis-content li {
+    color: var(--text-primary);
+}
+
 /* Settings Tab */
 .settings-content {
     max-width: 800px;
@@ -1160,13 +1248,15 @@ input:checked + .slider:before {
     transform: translateX(26px);
 }
 
-/* Message Reactions */
+/* Message Reactions (moved to bottom) */
 .message-reactions {
     display: flex;
     gap: 8px;
-    margin-top: 8px;
-    padding-top: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
     border-top: 1px solid var(--border-color);
+    justify-content: flex-start;
+    width: 100%;
 }
 
 .reaction-btn {
