@@ -60,15 +60,34 @@
                         </button>
                     </div>
                     <div class="chat-header-right">
-                        <button class="btn-icon" onclick="exportChatPDF()" title="Export Conversation as PDF">
+                        <button class="btn-icon" onclick="toggleSearch()" title="Search Conversation (Ctrl+F)">
+                            🔍
+                        </button>
+                        <button class="btn-icon" id="exportBtn" onclick="showExportMenu()" title="Export Conversation">
                             📄
                         </button>
                         <button class="btn-icon" onclick="copyChatToClipboard()" title="Copy Conversation">
                             📋
                         </button>
+                        <button class="btn-icon" id="ttsBtn" onclick="toggleTextToSpeech()" title="Text-to-Speech">
+                            🔊
+                        </button>
                         <a href="/api/download-resume" class="btn-icon" title="Download Resume" download>
                             📥
                         </a>
+                    </div>
+                    <!-- Search Bar -->
+                    <div id="searchBar" class="search-bar hidden">
+                        <input type="text" id="searchInput" placeholder="Search conversation... (Ctrl+F)" onkeyup="performSearch()">
+                        <button class="btn-icon-small" onclick="closeSearch()">✕</button>
+                        <span id="searchResults" class="search-results"></span>
+                    </div>
+                    <!-- Export Menu -->
+                    <div id="exportMenu" class="export-menu hidden">
+                        <button onclick="exportChat('txt')">📄 Text</button>
+                        <button onclick="exportChat('md')">📝 Markdown</button>
+                        <button onclick="exportChat('html')">🌐 HTML</button>
+                        <button onclick="exportChat('json')">📦 JSON</button>
                     </div>
                 </div>
                 <div id="chatMessages" class="chat-messages"></div>
@@ -93,11 +112,17 @@
                             💼 Work Experience
                         </button>
                     </div>
+                    <div class="formatting-toolbar">
+                        <button class="format-btn" onclick="formatText('bold')" title="Bold (Ctrl+B)"><strong>B</strong></button>
+                        <button class="format-btn" onclick="formatText('italic')" title="Italic (Ctrl+I)"><em>I</em></button>
+                        <button class="format-btn" onclick="formatText('code')" title="Code">&lt;/&gt;</button>
+                        <button class="format-btn" onclick="formatText('link')" title="Link">🔗</button>
+                    </div>
                     <div class="input-wrapper">
                         <button id="voiceBtn" class="btn-voice" onclick="toggleVoiceInput()" title="Voice Input">
                             🎤
                         </button>
-                        <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="handleKeyPress(event)">
+                        <textarea id="chatInput" rows="1" placeholder="Ask me anything..." onkeypress="handleKeyPress(event)" onkeydown="handleInputKeyDown(event)"></textarea>
                         <button class="btn-send" onclick="sendMessage()">Send</button>
                     </div>
                     <div id="voiceStatus" class="voice-status hidden"></div>
@@ -212,7 +237,7 @@
                             <h3>🎨 Appearance</h3>
                             <div class="setting-item">
                                 <label>Dark Mode</label>
-                                <button id="settingsDarkModeToggle" class="btn-secondary" onclick="toggleDarkMode()">
+                                <button id="settingsDarkModeToggle" class="btn-secondary">
                                     Toggle
                                 </button>
                             </div>

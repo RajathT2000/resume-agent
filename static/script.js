@@ -12,6 +12,13 @@ let userScrolledUp = false;
 let currentInputSuggestion = '';
 let messageReactions = {}; // Store reactions in memory
 let chatHistoryIndex = -1; // For arrow key navigation
+let messageTimestamps = {}; // Store timestamps for messages
+let searchActive = false;
+let currentSearchIndex = -1;
+let searchMatches = [];
+let textToSpeechEnabled = false;
+let currentSpeech = null;
+let editedMessages = {}; // Track edited messages
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -53,6 +60,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize keyboard shortcuts
     initKeyboardShortcuts();
+    
+    // Initialize conversation search
+    initConversationSearch();
+    
+    // Auto-resize textarea
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
     
     // Initialize auto-scroll
     initAutoScroll();
@@ -255,10 +274,10 @@ async function sendMessage() {
     input.value = '';
     
     // Add user message to UI
-    addMessageToChat('user', message);
+    const userMessageId = addMessageToChat('user', message);
     
-    // Add to history
-    chatHistory.push({ role: 'user', content: message });
+    // Add to history with messageId
+    chatHistory.push({ role: 'user', content: message, messageId: userMessageId, timestamp: Date.now() });
     
     // Show typing indicator (non-blocking)
     showTypingIndicator();
@@ -282,6 +301,9 @@ async function sendMessage() {
         
         // Create message container for streaming
         const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const timestamp = Date.now();
+        messageTimestamps[messageId] = timestamp;
+        
         const chatMessages = document.getElementById('chatMessages');
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message assistant fade-in';
@@ -291,12 +313,23 @@ async function sendMessage() {
         avatar.className = 'message-avatar';
         avatar.textContent = '🤖';
         
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = 'message-wrapper';
+        
         const messageContent = document.createElement('div');
         messageContent.className = 'message-content';
         messageContent.innerHTML = '';
         
+        const timestampDiv = document.createElement('div');
+        timestampDiv.className = 'message-timestamp';
+        timestampDiv.textContent = formatTimestamp(timestamp);
+        timestampDiv.title = new Date(timestamp).toLocaleString();
+        
+        messageWrapper.appendChild(messageContent);
+        messageWrapper.appendChild(timestampDiv);
+        
         messageDiv.appendChild(avatar);
-        messageDiv.appendChild(messageContent);
+        messageDiv.appendChild(messageWrapper);
         chatMessages.appendChild(messageDiv);
         
         // Check if response is streaming (text/event-stream) or JSON
@@ -333,8 +366,12 @@ async function sendMessage() {
                                 scrollToBottom();
                                 // Add reaction buttons
                                 setTimeout(() => addReactionButtons(messageId), 500);
-                                // Add to history (cleaned)
-                                chatHistory.push({ role: 'assistant', content: cleanedResponse });
+                                // Add to history with messageId and timestamp
+                                chatHistory.push({ role: 'assistant', content: cleanedResponse, messageId: messageId, timestamp: timestamp });
+                                // Auto-speak if TTS enabled
+                                if (textToSpeechEnabled && 'speechSynthesis' in window) {
+                                    setTimeout(() => speakText(cleanedResponse), 500);
+                                }
                                 return;
                             }
                         } catch (e) {
@@ -369,11 +406,25 @@ async function sendMessage() {
             }
             
             const messageId = messageDiv.getAttribute('data-message-id');
+            const timestamp = messageTimestamps[messageId] || Date.now();
+            
+            // Update timestamp display
+            const timestampDiv = messageDiv.querySelector('.message-timestamp');
+            if (timestampDiv) {
+                timestampDiv.textContent = formatTimestamp(timestamp);
+                timestampDiv.title = new Date(timestamp).toLocaleString();
+            }
+            
             if (messageId) {
                 setTimeout(() => addReactionButtons(messageId), 500);
             }
             
-            chatHistory.push({ role: 'assistant', content: responseText });
+            chatHistory.push({ role: 'assistant', content: responseText, messageId: messageId, timestamp: timestamp });
+            
+            // Auto-speak if TTS enabled
+            if (textToSpeechEnabled && 'speechSynthesis' in window) {
+                setTimeout(() => speakText(responseText), 500);
+            }
         }
     } catch (error) {
         console.error('Error sending message:', error);
@@ -421,6 +472,11 @@ function handleKeyPress(event) {
         event.preventDefault();
         sendMessage();
         hideSuggestions();
+    }
+    // Shift+Enter for new line
+    if (event.key === 'Enter' && event.shiftKey) {
+        // Allow default behavior (new line)
+        return true;
     }
 }
 
@@ -561,10 +617,10 @@ I can help you with:
 What would you like to know? Feel free to ask me anything! 💬`;
     
     // Add welcome message to chat
-    addMessageToChat('assistant', welcomeMsg);
+    const welcomeId = addMessageToChat('assistant', welcomeMsg);
     
-    // Add to history
-    chatHistory.push({ role: 'assistant', content: welcomeMsg });
+    // Add to history with messageId
+    chatHistory.push({ role: 'assistant', content: welcomeMsg, messageId: welcomeId, timestamp: Date.now() });
 }
 
 // Scroll to chat section
@@ -681,12 +737,20 @@ function toggleDarkMode() {
     document.body.classList.toggle('dark-mode', isDarkMode);
     localStorage.setItem('darkMode', isDarkMode);
     updateDarkModeIcon();
+    updateSettingsDarkModeButton();
 }
 
 function updateDarkModeIcon() {
     const darkModeBtn = document.getElementById('darkModeToggle');
     if (darkModeBtn) {
         darkModeBtn.textContent = isDarkMode ? '☀️' : '🌙';
+    }
+}
+
+function updateSettingsDarkModeButton() {
+    const btn = document.getElementById('settingsDarkModeToggle');
+    if (btn) {
+        btn.textContent = isDarkMode ? 'Disable Dark Mode' : 'Enable Dark Mode';
     }
 }
 
@@ -1154,27 +1218,19 @@ function initSettings() {
         });
     }
     
-    // Sync dark mode toggle button text
+    // Sync dark mode toggle button
     const settingsDarkModeToggle = document.getElementById('settingsDarkModeToggle');
     if (settingsDarkModeToggle) {
-        settingsDarkModeToggle.addEventListener('click', function() {
+        settingsDarkModeToggle.addEventListener('click', function(e) {
+            e.preventDefault();
             toggleDarkMode();
-            // Update button text
-            updateSettingsDarkModeButton();
         });
         updateSettingsDarkModeButton();
     }
 }
 
-function updateSettingsDarkModeButton() {
-    const btn = document.getElementById('settingsDarkModeToggle');
-    if (btn) {
-        btn.textContent = isDarkMode ? 'Disable Dark Mode' : 'Enable Dark Mode';
-    }
-}
-
-// Update addMessageToChat to include message ID and reactions
-function addMessageToChat(role, content, messageId = null) {
+// Update addMessageToChat to include message ID, timestamps, and reactions
+function addMessageToChat(role, content, messageId = null, timestamp = null) {
     const chatMessages = document.getElementById('chatMessages');
     if (!chatMessages) return;
     
@@ -1186,16 +1242,52 @@ function addMessageToChat(role, content, messageId = null) {
     }
     messageDiv.setAttribute('data-message-id', messageId);
     
+    if (!timestamp) {
+        timestamp = Date.now();
+    }
+    messageTimestamps[messageId] = timestamp;
+    
     const avatar = document.createElement('div');
     avatar.className = 'message-avatar';
     avatar.textContent = role === 'user' ? '👤' : '🤖';
+    
+    const messageWrapper = document.createElement('div');
+    messageWrapper.className = 'message-wrapper';
     
     const messageContent = document.createElement('div');
     messageContent.className = 'message-content';
     messageContent.innerHTML = markdownToHtml(content);
     
+    // Add timestamp
+    const timestampDiv = document.createElement('div');
+    timestampDiv.className = 'message-timestamp';
+    timestampDiv.textContent = formatTimestamp(timestamp);
+    timestampDiv.title = new Date(timestamp).toLocaleString();
+    
+    // Add edit/delete buttons for user messages
+    if (role === 'user') {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'message-actions';
+        const editBtn = document.createElement('button');
+        editBtn.className = 'msg-action-btn';
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Edit';
+        editBtn.onclick = () => editMessage(messageId);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'msg-action-btn';
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Delete';
+        deleteBtn.onclick = () => deleteMessage(messageId);
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(deleteBtn);
+        messageWrapper.appendChild(actionsDiv);
+    }
+    
+    messageWrapper.appendChild(messageContent);
+    messageWrapper.appendChild(timestampDiv);
+    
     messageDiv.appendChild(avatar);
-    messageDiv.appendChild(messageContent);
+    messageDiv.appendChild(messageWrapper);
     chatMessages.appendChild(messageDiv);
     
     // Add reaction buttons for assistant messages
@@ -1205,4 +1297,399 @@ function addMessageToChat(role, content, messageId = null) {
     
     scrollToBottom();
     return messageId;
+}
+
+// ========== FEATURES 1-6 ==========
+
+// 1. Message Timestamps (already added above in addMessageToChat)
+
+// 2. Conversation Search (Ctrl+F)
+function initConversationSearch() {
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            toggleSearch();
+        }
+        if (e.key === 'Escape' && searchActive) {
+            closeSearch();
+        }
+    });
+}
+
+function toggleSearch() {
+    const searchBar = document.getElementById('searchBar');
+    if (!searchBar) return;
+    
+    searchActive = !searchActive;
+    if (searchActive) {
+        searchBar.classList.remove('hidden');
+        document.getElementById('searchInput').focus();
+    } else {
+        closeSearch();
+    }
+}
+
+function closeSearch() {
+    const searchBar = document.getElementById('searchBar');
+    if (searchBar) {
+        searchBar.classList.add('hidden');
+        searchActive = false;
+        clearSearchHighlights();
+    }
+}
+
+function performSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    if (!searchInput || !searchResults) return;
+    
+    const query = searchInput.value.trim().toLowerCase();
+    if (!query) {
+        clearSearchHighlights();
+        searchResults.textContent = '';
+        return;
+    }
+    
+    const messages = document.querySelectorAll('.message-content');
+    searchMatches = [];
+    let matchCount = 0;
+    
+    messages.forEach((msg, index) => {
+        const text = msg.textContent.toLowerCase();
+        if (text.includes(query)) {
+            searchMatches.push(index);
+            matchCount++;
+            // Highlight match
+            const html = msg.innerHTML;
+            const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+            msg.innerHTML = html.replace(regex, '<mark class="search-highlight">$1</mark>');
+        }
+    });
+    
+    if (matchCount > 0) {
+        searchResults.textContent = `${matchCount} result${matchCount > 1 ? 's' : ''}`;
+        currentSearchIndex = -1;
+        jumpToNextMatch();
+    } else {
+        searchResults.textContent = 'No results';
+    }
+}
+
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function clearSearchHighlights() {
+    document.querySelectorAll('.search-highlight').forEach(el => {
+        const parent = el.parentNode;
+        parent.replaceChild(document.createTextNode(el.textContent), el);
+        parent.normalize();
+    });
+}
+
+function jumpToNextMatch() {
+    if (searchMatches.length === 0) return;
+    currentSearchIndex = (currentSearchIndex + 1) % searchMatches.length;
+    const msgIndex = searchMatches[currentSearchIndex];
+    const messages = document.querySelectorAll('.message-content');
+    if (messages[msgIndex]) {
+        messages[msgIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        messages[msgIndex].style.animation = 'highlightFlash 1s';
+    }
+}
+
+// 3. Message Editing & Deletion
+function editMessage(messageId) {
+    const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (!messageDiv) return;
+    
+    const messageContent = messageDiv.querySelector('.message-content');
+    const currentText = messageContent.textContent;
+    
+    // Create input field
+    const input = document.createElement('textarea');
+    input.value = currentText;
+    input.className = 'message-edit-input';
+    input.rows = 3;
+    
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn-primary btn-small';
+    saveBtn.textContent = 'Save';
+    saveBtn.onclick = () => saveEditedMessage(messageId, input.value);
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn-secondary btn-small';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => cancelEdit(messageId);
+    
+    const editControls = document.createElement('div');
+    editControls.className = 'edit-controls';
+    editControls.appendChild(saveBtn);
+    editControls.appendChild(cancelBtn);
+    
+    messageContent.innerHTML = '';
+    messageContent.appendChild(input);
+    messageContent.appendChild(editControls);
+    input.focus();
+}
+
+function saveEditedMessage(messageId, newText) {
+    const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (!messageDiv) return;
+    
+    const messageContent = messageDiv.querySelector('.message-content');
+    messageContent.innerHTML = markdownToHtml(newText);
+    
+    // Update history
+    const msgIndex = chatHistory.findIndex(m => m.messageId === messageId);
+    if (msgIndex > -1) {
+        chatHistory[msgIndex].content = newText;
+    }
+    
+    editedMessages[messageId] = true;
+    const timestampDiv = messageDiv.querySelector('.message-timestamp');
+    if (timestampDiv) {
+        timestampDiv.textContent = formatTimestamp(messageTimestamps[messageId]) + ' (edited)';
+    }
+}
+
+function cancelEdit(messageId) {
+    const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (!messageDiv) return;
+    
+    const msgIndex = chatHistory.findIndex(m => m.messageId === messageId);
+    if (msgIndex > -1) {
+        const messageContent = messageDiv.querySelector('.message-content');
+        messageContent.innerHTML = markdownToHtml(chatHistory[msgIndex].content);
+    }
+}
+
+function deleteMessage(messageId) {
+    if (!confirm('Are you sure you want to delete this message?')) return;
+    
+    const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageDiv) {
+        messageDiv.style.animation = 'fadeOut 0.3s';
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 300);
+    }
+    
+    // Remove from history
+    chatHistory = chatHistory.filter(m => m.messageId !== messageId);
+    delete messageTimestamps[messageId];
+    delete editedMessages[messageId];
+}
+
+// 4. Rich Text Formatting Toolbar
+function formatText(type) {
+    const chatInput = document.getElementById('chatInput');
+    if (!chatInput) return;
+    
+    const start = chatInput.selectionStart;
+    const end = chatInput.selectionEnd;
+    const selectedText = chatInput.value.substring(start, end);
+    let formattedText = '';
+    
+    switch(type) {
+        case 'bold':
+            formattedText = `**${selectedText || 'bold text'}**`;
+            break;
+        case 'italic':
+            formattedText = `*${selectedText || 'italic text'}*`;
+            break;
+        case 'code':
+            formattedText = `\`${selectedText || 'code'}\``;
+            break;
+        case 'link':
+            formattedText = `[${selectedText || 'link text'}](url)`;
+            break;
+    }
+    
+    chatInput.value = chatInput.value.substring(0, start) + formattedText + chatInput.value.substring(end);
+    chatInput.focus();
+    chatInput.setSelectionRange(start + formattedText.length, start + formattedText.length);
+}
+
+function handleInputKeyDown(e) {
+    // Ctrl+B for bold, Ctrl+I for italic
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        formatText('bold');
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+        e.preventDefault();
+        formatText('italic');
+    }
+}
+
+// 5. Export Formats
+function showExportMenu() {
+    const menu = document.getElementById('exportMenu');
+    if (menu) {
+        menu.classList.toggle('hidden');
+    }
+}
+
+function exportChat(format) {
+    let content = '';
+    const timestamp = new Date().toISOString().split('T')[0];
+    
+    if (format === 'txt') {
+        content = `Rajath's AI Avatar - Conversation Export\n`;
+        content += `Generated: ${new Date().toLocaleString()}\n`;
+        content += `Visitor: ${visitorName} | Company: ${visitorCompany}\n`;
+        content += `${'='.repeat(60)}\n\n`;
+        
+        chatHistory.forEach(msg => {
+            const role = msg.role === 'user' ? 'You' : "Rajath's AI Avatar";
+            const time = msg.timestamp ? formatTimestamp(msg.timestamp) : '';
+            content += `[${role}]${time ? ' (' + time + ')' : ''}:\n${msg.content}\n\n`;
+        });
+        
+        downloadFile(content, `conversation_${timestamp}.txt`, 'text/plain');
+    } else if (format === 'md') {
+        content = `# Rajath's AI Avatar - Conversation\n\n`;
+        content += `**Generated:** ${new Date().toLocaleString()}\n`;
+        content += `**Visitor:** ${visitorName} | **Company:** ${visitorCompany}\n\n`;
+        content += `---\n\n`;
+        
+        chatHistory.forEach(msg => {
+            const role = msg.role === 'user' ? '**You**' : "**Rajath's AI Avatar**";
+            const time = msg.timestamp ? ` *(${formatTimestamp(msg.timestamp)})*` : '';
+            content += `${role}${time}:\n\n${msg.content}\n\n---\n\n`;
+        });
+        
+        downloadFile(content, `conversation_${timestamp}.md`, 'text/markdown');
+    } else if (format === 'html') {
+        content = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rajath's AI Avatar - Conversation</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+        .message { margin: 20px 0; padding: 15px; border-radius: 8px; }
+        .user { background: #e3f2fd; }
+        .assistant { background: #f5f5f5; }
+        .timestamp { font-size: 12px; color: #666; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Rajath's AI Avatar - Conversation</h1>
+    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+    <p><strong>Visitor:</strong> ${visitorName} | <strong>Company:</strong> ${visitorCompany}</p>
+    <hr>`;
+        
+        chatHistory.forEach(msg => {
+            const role = msg.role === 'user' ? 'user' : 'assistant';
+            const name = msg.role === 'user' ? 'You' : "Rajath's AI Avatar";
+            const time = msg.timestamp ? `<div class="timestamp">${formatTimestamp(msg.timestamp)}</div>` : '';
+            content += `<div class="message ${role}"><strong>${name}:</strong><br>${msg.content.replace(/\n/g, '<br>')}${time}</div>`;
+        });
+        
+        content += `</body></html>`;
+        downloadFile(content, `conversation_${timestamp}.html`, 'text/html');
+    } else if (format === 'json') {
+        const data = {
+            metadata: {
+                visitor: visitorName,
+                company: visitorCompany,
+                exported: new Date().toISOString()
+            },
+            messages: chatHistory.map(msg => ({
+                role: msg.role,
+                content: msg.content,
+                timestamp: msg.timestamp || null
+            }))
+        };
+        downloadFile(JSON.stringify(data, null, 2), `conversation_${timestamp}.json`, 'application/json');
+    }
+    
+    showExportMenu(); // Close menu
+}
+
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+// 6. Text-to-Speech
+function toggleTextToSpeech() {
+    textToSpeechEnabled = !textToSpeechEnabled;
+    const btn = document.getElementById('ttsBtn');
+    if (btn) {
+        btn.classList.toggle('active', textToSpeechEnabled);
+        btn.title = textToSpeechEnabled ? 'Disable Text-to-Speech' : 'Enable Text-to-Speech';
+    }
+    
+    if (textToSpeechEnabled && 'speechSynthesis' in window) {
+        // Read the last assistant message
+        const lastAssistantMsg = [...chatHistory].reverse().find(m => m.role === 'assistant');
+        if (lastAssistantMsg) {
+            speakText(lastAssistantMsg.content);
+        }
+    } else {
+        stopSpeaking();
+    }
+}
+
+function speakText(text) {
+    if (!('speechSynthesis' in window)) {
+        alert('Text-to-speech is not supported in your browser.');
+        return;
+    }
+    
+    stopSpeaking();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    currentSpeech = utterance;
+    speechSynthesis.speak(utterance);
+}
+
+function stopSpeaking() {
+    if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+    }
+    currentSpeech = null;
+}
+
+// Auto-speak new assistant messages if TTS is enabled
+function addMessageToChatWithTTS(role, content, messageId = null, timestamp = null) {
+    const id = addMessageToChat(role, content, messageId, timestamp);
+    
+    if (textToSpeechEnabled && role === 'assistant' && 'speechSynthesis' in window) {
+        setTimeout(() => {
+            speakText(content);
+        }, 500);
+    }
+    
+    return id;
+}
+
+// Format timestamp
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
 }
