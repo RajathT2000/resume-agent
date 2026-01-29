@@ -109,11 +109,11 @@ async function analyzeCompanyFit() {
         resultBox.innerHTML = `
             <div class="result-header">
                 <span>Company Fit Analysis</span>
-                <button class="btn-icon-small" onclick="copyToClipboard('companyFitResult')" title="Copy Result">
+                <button class="btn-icon-small" onclick="copyToClipboard('companyFitContent')" title="Copy Result">
                     📋
                 </button>
             </div>
-            <div class="analysis-content">${analysisHtml}</div>
+            <div id="companyFitContent" class="analysis-content">${analysisHtml}</div>
         `;
     } catch (error) {
         console.error('Error analyzing company fit:', error);
