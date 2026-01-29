@@ -52,29 +52,18 @@
         <main class="container main-content">
             <!-- Tabs -->
             <div class="tabs-container">
-                <button class="tab-btn active" onclick="switchTab('companyFit')" id="tabCompanyFit">
-                    🎯 Company Fit Analysis
-                </button>
-                <button class="tab-btn" onclick="switchTab('jobAnalysis')" id="tabJobAnalysis">
+                <button class="tab-btn active" onclick="switchTab('jobAnalysis')" id="tabJobAnalysis">
                     📋 Job Description Analyzer
+                </button>
+                <button class="tab-btn" onclick="switchTab('companyFit')" id="tabCompanyFit">
+                    🎯 Company Fit Analysis
                 </button>
             </div>
 
             <!-- Tab Content Container -->
             <div class="tab-content-wrapper">
-                <!-- Company Fit Section -->
-                <section id="companyFit" class="tab-content active">
-                    <div class="section-header">
-                        <h2>🎯 Why Rajath is Perfect for Your Company</h2>
-                        <button class="btn-secondary" onclick="analyzeCompanyFit()">🔄 Refresh Analysis</button>
-                    </div>
-                    <div id="companyFitResult" class="result-box">
-                        <p class="placeholder">Click "Refresh Analysis" to see personalized insights</p>
-                    </div>
-                </section>
-
                 <!-- Job Analysis Section -->
-                <section id="jobAnalysis" class="tab-content">
+                <section id="jobAnalysis" class="tab-content active">
                     <div class="section-header">
                         <h2>📋 Job Description Match Analyzer</h2>
                     </div>
@@ -85,6 +74,17 @@
                     <button class="btn-primary" onclick="analyzeJob()">Analyze Match</button>
                     <div id="jobAnalysisResult" class="result-box hidden">
                         <div id="jobAnalysisContent"></div>
+                    </div>
+                </section>
+
+                <!-- Company Fit Section -->
+                <section id="companyFit" class="tab-content">
+                    <div class="section-header">
+                        <h2>🎯 Why Rajath is Perfect for Your Company</h2>
+                        <button class="btn-secondary" onclick="analyzeCompanyFit()">🔄 Refresh Analysis</button>
+                    </div>
+                    <div id="companyFitResult" class="result-box">
+                        <p class="placeholder">Click "Refresh Analysis" to see personalized insights</p>
                     </div>
                 </section>
             </div>
