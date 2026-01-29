@@ -2,8 +2,6 @@
 let visitorName = "Guest";
 let visitorCompany = "Unknown";
 let chatHistory = [];
-let projects = [];
-let currentProjectIndex = 0;
 let recognition = null;
 let isListening = false;
 
@@ -52,10 +50,6 @@ function handleWelcomeSubmit(e) {
     // Update welcome banner
     const welcomeText = document.getElementById('welcomeText');
     welcomeText.textContent = `👋 Welcome ${visitorName} from ${visitorCompany}! 🎉`;
-    
-    // Load stats and projects
-    loadStats();
-    loadProjects();
     
     // Show first tab by default
     switchTab('companyFit');
@@ -416,120 +410,6 @@ function scrollToChat() {
     setTimeout(() => {
         document.getElementById('chatInput').focus();
     }, 500);
-}
-
-// Load Stats
-async function loadStats() {
-    try {
-        const response = await fetch('/api/stats');
-        const stats = await response.json();
-        
-        // Animate counters
-        animateCounter('statYears', stats.years_experience, 0, 2000);
-        animateCounter('statProjects', stats.projects_count, 0, 2000);
-        animateCounter('statSkills', stats.skills_count, 0, 2000);
-        animateCounter('statCerts', stats.certifications, 0, 2000);
-    } catch (error) {
-        console.error('Error loading stats:', error);
-    }
-}
-
-// Animate Counter
-function animateCounter(elementId, target, start, duration) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-    
-    const startTime = performance.now();
-    
-    function update(currentTime) {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        const current = Math.floor(start + (target - start) * easeOut);
-        
-        element.textContent = current;
-        
-        if (progress < 1) {
-            requestAnimationFrame(update);
-        } else {
-            element.textContent = target;
-        }
-    }
-    
-    requestAnimationFrame(update);
-}
-
-// Load Projects
-async function loadProjects() {
-    try {
-        const response = await fetch('/api/projects');
-        const data = await response.json();
-        projects = data.projects || [];
-        renderProjects();
-    } catch (error) {
-        console.error('Error loading projects:', error);
-    }
-}
-
-// Render Projects Carousel
-function renderProjects() {
-    const container = document.getElementById('projectsContainer');
-    const indicators = document.getElementById('carouselIndicators');
-    
-    if (!container || projects.length === 0) return;
-    
-    container.innerHTML = '';
-    indicators.innerHTML = '';
-    
-    projects.forEach((project, index) => {
-        const projectCard = document.createElement('div');
-        projectCard.className = `project-card ${index === 0 ? 'active' : ''}`;
-        projectCard.innerHTML = `
-            <h3>${escapeHtml(project.name)}</h3>
-            <p>${escapeHtml(project.description)}</p>
-            <div class="project-tech">
-                ${project.technologies.map(tech => `<span class="tech-tag">${escapeHtml(tech)}</span>`).join('')}
-            </div>
-        `;
-        container.appendChild(projectCard);
-        
-        const indicator = document.createElement('button');
-        indicator.className = `indicator ${index === 0 ? 'active' : ''}`;
-        indicator.onclick = () => goToProject(index);
-        indicators.appendChild(indicator);
-    });
-    
-    // Auto-rotate carousel every 5 seconds
-    if (projects.length > 1) {
-        setInterval(() => {
-            moveCarousel(1);
-        }, 5000);
-    }
-}
-
-// Move Carousel
-function moveCarousel(direction) {
-    currentProjectIndex += direction;
-    if (currentProjectIndex < 0) currentProjectIndex = projects.length - 1;
-    if (currentProjectIndex >= projects.length) currentProjectIndex = 0;
-    goToProject(currentProjectIndex);
-}
-
-// Go to Specific Project
-function goToProject(index) {
-    if (index < 0 || index >= projects.length) return;
-    
-    currentProjectIndex = index;
-    const cards = document.querySelectorAll('.project-card');
-    const indicators = document.querySelectorAll('.indicator');
-    
-    cards.forEach((card, i) => {
-        card.classList.toggle('active', i === index);
-    });
-    
-    indicators.forEach((indicator, i) => {
-        indicator.classList.toggle('active', i === index);
-    });
 }
 
 // Initialize Voice Recognition
