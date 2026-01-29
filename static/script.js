@@ -4,6 +4,7 @@ let visitorCompany = "Unknown";
 let chatHistory = [];
 let recognition = null;
 let isListening = false;
+let isDarkMode = localStorage.getItem('darkMode') === 'true';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -15,6 +16,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize voice recognition
     initVoiceRecognition();
+    
+    // Apply dark mode if enabled
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        updateDarkModeIcon();
+    }
 });
 
 // Animate elements on page load
@@ -50,6 +57,9 @@ function handleWelcomeSubmit(e) {
     // Update welcome banner
     const welcomeText = document.getElementById('welcomeText');
     welcomeText.textContent = `👋 Welcome ${visitorName} from ${visitorCompany}! 🎉`;
+    
+    // Load shared analysis if URL has parameters
+    loadSharedAnalysis();
     
     // Show first tab by default (Job Analysis)
     switchTab('jobAnalysis');
@@ -95,7 +105,16 @@ async function analyzeCompanyFit() {
         });
         
         const data = await response.json();
-        resultBox.innerHTML = `<div class="analysis-content">${markdownToHtml(data.analysis)}</div>`;
+        const analysisHtml = markdownToHtml(data.analysis);
+        resultBox.innerHTML = `
+            <div class="result-header">
+                <span>Company Fit Analysis</span>
+                <button class="btn-icon-small" onclick="copyToClipboard('companyFitResult')" title="Copy Result">
+                    📋
+                </button>
+            </div>
+            <div class="analysis-content">${analysisHtml}</div>
+        `;
     } catch (error) {
         console.error('Error analyzing company fit:', error);
         resultBox.innerHTML = '<div class="analysis-content"><p style="color: var(--error-color);">Error analyzing company fit. Please try again.</p></div>';
@@ -131,7 +150,8 @@ async function analyzeJob() {
         });
         
         const data = await response.json();
-        contentBox.innerHTML = `<div class="analysis-content">${markdownToHtml(data.analysis)}</div>`;
+        const analysisHtml = markdownToHtml(data.analysis);
+        contentBox.innerHTML = `<div class="analysis-content">${analysisHtml}</div>`;
     } catch (error) {
         console.error('Error analyzing job:', error);
         contentBox.innerHTML = '<div class="analysis-content"><p style="color: var(--error-color);">Error analyzing job description. Please try again.</p></div>';
@@ -506,4 +526,151 @@ function stopVoiceInput() {
     setTimeout(() => {
         voiceStatus.classList.add('hidden');
     }, 2000);
+}
+
+// Dark Mode Toggle
+function toggleDarkMode() {
+    isDarkMode = !isDarkMode;
+    document.body.classList.toggle('dark-mode', isDarkMode);
+    localStorage.setItem('darkMode', isDarkMode);
+    updateDarkModeIcon();
+}
+
+function updateDarkModeIcon() {
+    const darkModeBtn = document.getElementById('darkModeToggle');
+    if (darkModeBtn) {
+        darkModeBtn.textContent = isDarkMode ? '☀️' : '🌙';
+    }
+}
+
+// Export Chat as PDF
+async function exportChatPDF() {
+    try {
+        const response = await fetch('/api/export-chat-pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                history: chatHistory,
+                visitor_name: visitorName
+            })
+        });
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `conversation_${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    } catch (error) {
+        console.error('Error exporting chat:', error);
+        alert('Failed to export conversation. Please try again.');
+    }
+}
+
+// Copy Chat to Clipboard
+async function copyChatToClipboard() {
+    try {
+        let chatText = `Rajath's AI Avatar - Conversation\n`;
+        chatText += `Visitor: ${visitorName} | Company: ${visitorCompany}\n`;
+        chatText += `${'='.repeat(50)}\n\n`;
+        
+        chatHistory.forEach(msg => {
+            const role = msg.role === 'user' ? 'You' : "Rajath's AI Avatar";
+            chatText += `[${role}]: ${msg.content}\n\n`;
+        });
+        
+        await navigator.clipboard.writeText(chatText);
+        
+        // Show feedback
+        const btn = event.target.closest('button');
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 2000);
+    } catch (error) {
+        console.error('Error copying chat:', error);
+        alert('Failed to copy conversation. Please try again.');
+    }
+}
+
+// Copy Analysis Result to Clipboard
+async function copyToClipboard(elementId) {
+    try {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        // Get text content, stripping HTML
+        const text = element.innerText || element.textContent;
+        
+        await navigator.clipboard.writeText(text);
+        
+        // Show feedback
+        const btn = event.target.closest('button');
+        const originalText = btn.textContent;
+        btn.textContent = '✓';
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 2000);
+    } catch (error) {
+        console.error('Error copying:', error);
+        alert('Failed to copy. Please try again.');
+    }
+}
+
+// Share Analysis Link
+function shareAnalysis(type) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', type);
+    url.searchParams.set('visitor', visitorName);
+    url.searchParams.set('company', visitorCompany);
+    
+    const shareUrl = url.toString();
+    
+    if (navigator.share) {
+        navigator.share({
+            title: `Rajath's AI Avatar - ${type === 'job' ? 'Job Analysis' : 'Company Fit Analysis'}`,
+            text: `Check out this analysis from Rajath's AI Avatar`,
+            url: shareUrl
+        }).catch(err => {
+            copyShareLink(shareUrl);
+        });
+    } else {
+        copyShareLink(shareUrl);
+    }
+}
+
+function copyShareLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Shareable link copied to clipboard!');
+    }).catch(() => {
+        prompt('Copy this link:', url);
+    });
+}
+
+// Load shared analysis from URL
+function loadSharedAnalysis() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    const visitor = urlParams.get('visitor');
+    const company = urlParams.get('company');
+    
+    if (tab && (tab === 'job' || tab === 'company')) {
+        if (visitor) visitorName = visitor;
+        if (company) visitorCompany = company;
+        
+        setTimeout(() => {
+            if (tab === 'job') {
+                switchTab('jobAnalysis');
+            } else {
+                switchTab('companyFit');
+                analyzeCompanyFit();
+            }
+        }, 1000);
+    }
 }

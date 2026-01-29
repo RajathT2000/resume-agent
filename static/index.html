@@ -50,6 +50,60 @@
 
         <!-- Main Content -->
         <main class="container main-content">
+            <!-- Chat Section (First) -->
+            <section class="chat-section">
+                <div class="chat-header">
+                    <div class="chat-header-left">
+                        <h2>💬 Conversation</h2>
+                        <button id="darkModeToggle" class="btn-icon" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+                            🌙
+                        </button>
+                    </div>
+                    <div class="chat-header-right">
+                        <button class="btn-icon" onclick="exportChatPDF()" title="Export Conversation as PDF">
+                            📄
+                        </button>
+                        <button class="btn-icon" onclick="copyChatToClipboard()" title="Copy Conversation">
+                            📋
+                        </button>
+                        <a href="/api/download-resume" class="btn-icon" title="Download Resume" download>
+                            📥
+                        </a>
+                    </div>
+                </div>
+                <div id="chatMessages" class="chat-messages"></div>
+                <div class="chat-input-container">
+                    <div class="quick-actions-grid">
+                        <button class="quick-action-btn" onclick="sendExample('What is your experience with Django?')">
+                            🐍 Django Experience
+                        </button>
+                        <button class="quick-action-btn" onclick="sendExample('Tell me about your AI projects.')">
+                            🤖 AI Projects
+                        </button>
+                        <button class="quick-action-btn" onclick="sendExample('Where did you study?')">
+                            🎓 Education
+                        </button>
+                        <button class="quick-action-btn" onclick="sendExample('How would you approach building a scalable API?')">
+                            🔌 API Design
+                        </button>
+                        <button class="quick-action-btn" onclick="sendExample('What are your strongest technical skills?')">
+                            💻 Technical Skills
+                        </button>
+                        <button class="quick-action-btn" onclick="sendExample('Tell me about your work experience.')">
+                            💼 Work Experience
+                        </button>
+                    </div>
+                    <div class="input-wrapper">
+                        <button id="voiceBtn" class="btn-voice" onclick="toggleVoiceInput()" title="Voice Input">
+                            🎤
+                        </button>
+                        <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="handleKeyPress(event)">
+                        <button class="btn-send" onclick="sendMessage()">Send</button>
+                    </div>
+                    <div id="voiceStatus" class="voice-status hidden"></div>
+                </div>
+            </section>
+
             <!-- Tabs -->
             <div class="tabs-container">
                 <button class="tab-btn active" onclick="switchTab('jobAnalysis')" id="tabJobAnalysis">
@@ -66,6 +120,9 @@
                 <section id="jobAnalysis" class="tab-content active">
                     <div class="section-header">
                         <h2>📋 Job Description Match Analyzer</h2>
+                        <button class="btn-icon" onclick="shareAnalysis('job')" title="Share Analysis">
+                            🔗
+                        </button>
                     </div>
                     <p class="section-description">Paste a job description below and I'll analyze how Rajath's experience matches the requirements</p>
                     <div class="form-group">
@@ -73,6 +130,12 @@
                     </div>
                     <button class="btn-primary analyze-btn" onclick="analyzeJob()">Analyze Match</button>
                     <div id="jobAnalysisResult" class="result-box hidden">
+                        <div class="result-header">
+                            <span>Analysis Result</span>
+                            <button class="btn-icon-small" onclick="copyToClipboard('jobAnalysisContent')" title="Copy Result">
+                                📋
+                            </button>
+                        </div>
                         <div id="jobAnalysisContent"></div>
                     </div>
                 </section>
@@ -81,38 +144,24 @@
                 <section id="companyFit" class="tab-content">
                     <div class="section-header">
                         <h2>🎯 Why Rajath is Perfect for Your Company</h2>
-                        <button class="btn-secondary" onclick="analyzeCompanyFit()">🔄 Refresh Analysis</button>
+                        <div class="section-header-actions">
+                            <button class="btn-icon" onclick="shareAnalysis('company')" title="Share Analysis">
+                                🔗
+                            </button>
+                            <button class="btn-secondary" onclick="analyzeCompanyFit()">🔄 Refresh Analysis</button>
+                        </div>
                     </div>
                     <div id="companyFitResult" class="result-box">
+                        <div class="result-header">
+                            <span>Company Fit Analysis</span>
+                            <button class="btn-icon-small" onclick="copyToClipboard('companyFitResult')" title="Copy Result">
+                                📋
+                            </button>
+                        </div>
                         <p class="placeholder">Click "Refresh Analysis" to see personalized insights</p>
                     </div>
                 </section>
             </div>
-
-            <!-- Chat Section -->
-            <section class="chat-section">
-                <div class="chat-header">
-                    <h2>💬 Conversation</h2>
-                </div>
-                <div id="chatMessages" class="chat-messages"></div>
-                <div class="chat-input-container">
-                    <div class="example-queries">
-                        <span class="example-label">Try asking:</span>
-                        <button class="example-btn" onclick="sendExample('What is your experience with Django?')">Django Experience</button>
-                        <button class="example-btn" onclick="sendExample('Tell me about your AI projects.')">AI Projects</button>
-                        <button class="example-btn" onclick="sendExample('Where did you study?')">Education</button>
-                        <button class="example-btn" onclick="sendExample('How would you approach building a scalable API?')">API Design</button>
-                    </div>
-                    <div class="input-wrapper">
-                        <button id="voiceBtn" class="btn-voice" onclick="toggleVoiceInput()" title="Voice Input">
-                            🎤
-                        </button>
-                        <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="handleKeyPress(event)">
-                        <button class="btn-send" onclick="sendMessage()">Send</button>
-                    </div>
-                    <div id="voiceStatus" class="voice-status hidden"></div>
-                </div>
-            </section>
         </main>
         
         <!-- Floating Start Chatting Button -->

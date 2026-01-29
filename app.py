@@ -5,7 +5,7 @@ Modern, professional website replacing Gradio template
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -14,6 +14,7 @@ from openai import OpenAI
 from pypdf import PdfReader
 import re
 import json
+from datetime import datetime
 
 # Load API Key
 load_dotenv()
@@ -291,6 +292,58 @@ Be honest, specific, and actionable. Format clearly with sections."""
         return JSONResponse({
             "analysis": response.choices[0].message.content
         })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/export-chat-pdf")
+async def export_chat_pdf(request: dict):
+    """Export chat conversation as PDF"""
+    try:
+        chat_history = request.get("history", [])
+        visitor_name = request.get("visitor_name", "Guest")
+        
+        # Create simple text-based PDF content
+        pdf_content = f"""
+Rajath's AI Avatar - Conversation Export
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Visitor: {visitor_name}
+{'='*60}
+
+"""
+        
+        for msg in chat_history:
+            role = msg.get("role", "unknown")
+            content = msg.get("content", "")
+            if role == "user":
+                pdf_content += f"\n[You]: {content}\n"
+            elif role == "assistant":
+                pdf_content += f"\n[Rajath's AI Avatar]: {content}\n"
+            pdf_content += "-" * 60 + "\n"
+        
+        # Return as text file (simple approach without external PDF library)
+        return Response(
+            content=pdf_content,
+            media_type="text/plain",
+            headers={
+                "Content-Disposition": f'attachment; filename="conversation_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt"'
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/download-resume")
+async def download_resume():
+    """Download Rajath's resume PDF"""
+    try:
+        resume_path = "files/rajath.pdf"
+        if os.path.exists(resume_path):
+            return FileResponse(
+                resume_path,
+                media_type="application/pdf",
+                filename="Rajath_Resume.pdf"
+            )
+        else:
+            raise HTTPException(status_code=404, detail="Resume file not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
