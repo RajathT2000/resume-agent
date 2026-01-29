@@ -53,6 +53,9 @@ function handleWelcomeSubmit(e) {
     
     // Show first tab by default (Job Analysis)
     switchTab('jobAnalysis');
+    
+    // Add welcome message to chat
+    addWelcomeMessage();
 }
 
 // Switch Tabs
@@ -237,13 +240,13 @@ async function sendMessage() {
             const data = await response.json();
             const responseText = data.response || '';
             
-            // Simulate typing effect
+            // Simulate typing effect (faster)
             let typedText = '';
             for (let i = 0; i < responseText.length; i++) {
                 typedText += responseText[i];
                 messageContent.innerHTML = markdownToHtml(typedText);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
-                await new Promise(resolve => setTimeout(resolve, 20)); // 20ms delay per character
+                await new Promise(resolve => setTimeout(resolve, 5)); // 5ms delay per character (faster)
             }
             
             chatHistory.push({ role: 'assistant', content: responseText });
@@ -397,6 +400,25 @@ function markdownToHtml(markdown) {
     }
     
     return result.join('\n');
+}
+
+// Add Welcome Message
+function addWelcomeMessage() {
+    const welcomeMsg = `Hello ${visitorName}! 👋 I'm Rajath's AI Avatar, here to help you learn more about my background, skills, and experience. 
+
+I can help you with:
+• Analyzing how my skills match a job description
+• Answering questions about my experience with Django, Python, AI, and more
+• Discussing my projects and achievements
+• Providing insights about my fit for your company
+
+What would you like to know? Feel free to ask me anything! 💬`;
+    
+    // Add welcome message to chat
+    addMessageToChat('assistant', welcomeMsg);
+    
+    // Add to history
+    chatHistory.push({ role: 'assistant', content: welcomeMsg });
 }
 
 // Scroll to chat section
