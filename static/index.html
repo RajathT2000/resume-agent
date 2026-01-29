@@ -112,6 +112,9 @@
                 <button class="tab-btn" onclick="switchTab('companyFit')" id="tabCompanyFit">
                     🎯 Company Fit Analysis
                 </button>
+                <button class="tab-btn" onclick="switchTab('settings')" id="tabSettings">
+                    ⚙️ Settings
+                </button>
             </div>
 
             <!-- Tab Content Container -->
@@ -154,11 +157,90 @@
                     <div id="companyFitResult" class="result-box">
                         <div class="result-header">
                             <span>Company Fit Analysis</span>
-                            <button class="btn-icon-small" onclick="copyToClipboard('companyFitResult')" title="Copy Result">
+                            <button class="btn-icon-small" onclick="copyToClipboard('companyFitContent')" title="Copy Result">
                                 📋
                             </button>
                         </div>
                         <p class="placeholder">Click "Refresh Analysis" to see personalized insights</p>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settings" class="tab-content">
+                    <div class="section-header">
+                        <h2>⚙️ Settings</h2>
+                    </div>
+                    <div class="settings-content">
+                        <div class="settings-section">
+                            <h3>⌨️ Keyboard Shortcuts</h3>
+                            <table class="shortcuts-table">
+                                <thead>
+                                    <tr>
+                                        <th>Shortcut</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><kbd>Ctrl</kbd> + <kbd>K</kbd> / <kbd>Cmd</kbd> + <kbd>K</kbd></td>
+                                        <td>Focus chat input</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>Enter</kbd></td>
+                                        <td>Send message</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>Shift</kbd> + <kbd>Enter</kbd></td>
+                                        <td>New line in input</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>Esc</kbd></td>
+                                        <td>Close modals / Clear input</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>Tab</kbd></td>
+                                        <td>Cycle through quick actions</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>↑</kbd> / <kbd>↓</kbd></td>
+                                        <td>Navigate chat history</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="settings-section">
+                            <h3>🎨 Appearance</h3>
+                            <div class="setting-item">
+                                <label>Dark Mode</label>
+                                <button id="settingsDarkModeToggle" class="btn-secondary" onclick="toggleDarkMode()">
+                                    Toggle
+                                </button>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <h3>⚡ Performance</h3>
+                            <div class="setting-item">
+                                <label>Auto-scroll to latest messages</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="autoScrollToggle" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Show typing indicators</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="typingIndicatorToggle" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Smart input suggestions</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="smartSuggestionsToggle" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>

@@ -5,6 +5,19 @@ let chatHistory = [];
 let recognition = null;
 let isListening = false;
 let isDarkMode = localStorage.getItem('darkMode') === 'true';
+let autoScrollEnabled = localStorage.getItem('autoScroll') !== 'false';
+let typingIndicatorEnabled = localStorage.getItem('typingIndicator') !== 'false';
+let smartSuggestionsEnabled = localStorage.getItem('smartSuggestions') !== 'false';
+let userScrolledUp = false;
+let messageReactions = {}; // Store reactions in memory
+let chatHistoryIndex = -1; // For arrow key navigation
+let autoScrollEnabled = localStorage.getItem('autoScroll') !== 'false';
+let typingIndicatorEnabled = localStorage.getItem('typingIndicator') !== 'false';
+let smartSuggestionsEnabled = localStorage.getItem('smartSuggestions') !== 'false';
+let userScrolledUp = false;
+let currentInputSuggestion = '';
+let messageReactions = {}; // Store reactions in memory
+let chatHistoryIndex = -1; // For arrow key navigation
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -13,6 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const chatInput = document.getElementById('chatInput');
     chatInput.addEventListener('keypress', handleKeyPress);
+    chatInput.addEventListener('input', handleInputChange);
+    chatInput.addEventListener('keydown', handleKeyDown);
     
     // Initialize voice recognition
     initVoiceRecognition();
@@ -21,6 +36,20 @@ document.addEventListener('DOMContentLoaded', function() {
     if (isDarkMode) {
         document.body.classList.add('dark-mode');
         updateDarkModeIcon();
+    }
+    
+    // Initialize keyboard shortcuts
+    initKeyboardShortcuts();
+    
+    // Initialize auto-scroll
+    initAutoScroll();
+    
+    // Initialize settings
+    initSettings();
+    
+    // Initialize smart suggestions
+    if (smartSuggestionsEnabled) {
+        initSmartSuggestions();
     }
 });
 
@@ -195,9 +224,11 @@ async function sendMessage() {
         hideTypingIndicator();
         
         // Create message container for streaming
+        const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const chatMessages = document.getElementById('chatMessages');
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message assistant fade-in';
+        messageDiv.setAttribute('data-message-id', messageId);
         
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
@@ -235,11 +266,15 @@ async function sendMessage() {
                             const data = JSON.parse(line.slice(6));
                             if (data.chunk) {
                                 fullResponse += data.chunk;
-                                // Update message with typing effect
-                                messageContent.innerHTML = markdownToHtml(fullResponse);
-                                chatMessages.scrollTop = chatMessages.scrollHeight;
+                                // Optimized streaming update (batched)
+                                updateStreamingMessage(fullResponse, messageContent);
                             }
                             if (data.done) {
+                                // Final update
+                                messageContent.innerHTML = markdownToHtml(data.full_response || fullResponse);
+                                scrollToBottom();
+                                // Add reaction buttons
+                                setTimeout(() => addReactionButtons(messageId), 500);
                                 // Add to history
                                 chatHistory.push({ role: 'assistant', content: data.full_response || fullResponse });
                                 return;
@@ -260,13 +295,21 @@ async function sendMessage() {
             const data = await response.json();
             const responseText = data.response || '';
             
-            // Simulate typing effect (faster)
+            // Optimized typing effect (batched updates)
             let typedText = '';
             for (let i = 0; i < responseText.length; i++) {
                 typedText += responseText[i];
-                messageContent.innerHTML = markdownToHtml(typedText);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                await new Promise(resolve => setTimeout(resolve, 5)); // 5ms delay per character (faster)
+                // Update every 3 characters for better performance
+                if (i % 3 === 0 || i === responseText.length - 1) {
+                    messageContent.innerHTML = markdownToHtml(typedText);
+                    scrollToBottom();
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+            }
+            
+            const messageId = messageDiv.getAttribute('data-message-id');
+            if (messageId) {
+                setTimeout(() => addReactionButtons(messageId), 500);
             }
             
             chatHistory.push({ role: 'assistant', content: responseText });
@@ -313,8 +356,10 @@ function addMessageToChat(role, content) {
 
 // Handle Enter Key
 function handleKeyPress(event) {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
         sendMessage();
+        hideSuggestions();
     }
 }
 
@@ -673,4 +718,369 @@ function loadSharedAnalysis() {
             }
         }, 1000);
     }
+}
+
+// ========== NEW FEATURES (1-7) ==========
+
+// 1. Keyboard Shortcuts
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+K or Cmd+K to focus chat input
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.focus();
+            }
+        }
+        
+        // Esc to close modals or clear input
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('welcomeModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                // Don't close welcome modal, but clear input
+            }
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput && document.activeElement === chatInput) {
+                chatInput.value = '';
+            }
+        }
+        
+        // Arrow keys for chat history navigation
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput && document.activeElement === chatInput) {
+            if (e.key === 'ArrowUp' && chatHistory.length > 0) {
+                e.preventDefault();
+                chatHistoryIndex = Math.max(0, chatHistoryIndex - 1);
+                const msg = chatHistory[chatHistoryIndex];
+                if (msg && msg.role === 'user') {
+                    chatInput.value = msg.content;
+                }
+            } else if (e.key === 'ArrowDown' && chatHistoryIndex >= 0) {
+                e.preventDefault();
+                chatHistoryIndex = Math.min(chatHistory.length - 1, chatHistoryIndex + 1);
+                if (chatHistoryIndex < chatHistory.length) {
+                    const msg = chatHistory[chatHistoryIndex];
+                    chatInput.value = msg && msg.role === 'user' ? msg.content : '';
+                } else {
+                    chatInput.value = '';
+                    chatHistoryIndex = -1;
+                }
+            }
+        }
+    });
+}
+
+function handleKeyDown(e) {
+    // Tab to cycle through quick actions
+    if (e.key === 'Tab' && !e.shiftKey) {
+        const quickActions = document.querySelectorAll('.quick-action-btn');
+        if (quickActions.length > 0 && document.activeElement.classList.contains('quick-action-btn')) {
+            e.preventDefault();
+            const currentIndex = Array.from(quickActions).indexOf(document.activeElement);
+            const nextIndex = (currentIndex + 1) % quickActions.length;
+            quickActions[nextIndex].focus();
+        }
+    }
+}
+
+function handleInputChange(e) {
+    chatHistoryIndex = -1; // Reset history index when typing
+    if (smartSuggestionsEnabled) {
+        showSmartSuggestions(e.target.value);
+    }
+}
+
+// 2. Auto-scroll with pause on user scroll
+function initAutoScroll() {
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+    
+    // Create scroll to bottom button
+    const scrollBtn = document.createElement('button');
+    scrollBtn.className = 'scroll-to-bottom-btn';
+    scrollBtn.innerHTML = '↓';
+    scrollBtn.onclick = () => scrollToBottom(true);
+    chatMessages.parentElement.style.position = 'relative';
+    chatMessages.parentElement.appendChild(scrollBtn);
+    
+    let isUserScrolling = false;
+    let scrollTimeout;
+    
+    chatMessages.addEventListener('scroll', () => {
+        isUserScrolling = true;
+        clearTimeout(scrollTimeout);
+        
+        // Check if user scrolled up
+        const isAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop <= chatMessages.clientHeight + 50;
+        userScrolledUp = !isAtBottom;
+        
+        // Show/hide scroll button
+        if (userScrolledUp && autoScrollEnabled) {
+            scrollBtn.classList.add('visible');
+        } else {
+            scrollBtn.classList.remove('visible');
+        }
+        
+        scrollTimeout = setTimeout(() => {
+            isUserScrolling = false;
+        }, 150);
+    });
+}
+
+function scrollToBottom(force = false) {
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+    
+    if (force || (autoScrollEnabled && !userScrolledUp)) {
+        chatMessages.scrollTo({
+            top: chatMessages.scrollHeight,
+            behavior: 'smooth'
+        });
+        userScrolledUp = false;
+    }
+}
+
+// 3. Typing Indicators
+function showTypingIndicator() {
+    if (!typingIndicatorEnabled) return;
+    
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+    
+    // Remove existing typing indicator
+    hideTypingIndicator();
+    
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typingIndicator';
+    typingDiv.className = 'message assistant typing-indicator';
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.textContent = '🤖';
+    
+    const typingContent = document.createElement('div');
+    typingContent.className = 'message-content typing-content';
+    typingContent.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div><span style="margin-left: 8px; color: var(--text-secondary);">Rajath is typing...</span>';
+    
+    typingDiv.appendChild(avatar);
+    typingDiv.appendChild(typingContent);
+    chatMessages.appendChild(typingDiv);
+    
+    scrollToBottom();
+}
+
+// 4. Message Reactions
+function addReactionButtons(messageId) {
+    const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (!messageDiv || messageDiv.querySelector('.message-reactions')) return;
+    
+    const reactionsDiv = document.createElement('div');
+    reactionsDiv.className = 'message-reactions';
+    
+    const reactions = ['👍', '❤️', '💡', '🎯'];
+    reactions.forEach(emoji => {
+        const btn = document.createElement('button');
+        btn.className = 'reaction-btn';
+        btn.textContent = emoji;
+        btn.onclick = () => toggleReaction(messageId, emoji);
+        
+        // Show if already reacted
+        if (messageReactions[messageId] && messageReactions[messageId].includes(emoji)) {
+            btn.classList.add('active');
+        }
+        
+        reactionsDiv.appendChild(btn);
+    });
+    
+    messageDiv.appendChild(reactionsDiv);
+}
+
+function toggleReaction(messageId, emoji) {
+    if (!messageReactions[messageId]) {
+        messageReactions[messageId] = [];
+    }
+    
+    const index = messageReactions[messageId].indexOf(emoji);
+    if (index > -1) {
+        messageReactions[messageId].splice(index, 1);
+    } else {
+        messageReactions[messageId].push(emoji);
+    }
+    
+    // Update UI
+    const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageDiv) {
+        const btn = Array.from(messageDiv.querySelectorAll('.reaction-btn'))
+            .find(b => b.textContent === emoji);
+        if (btn) {
+            btn.classList.toggle('active');
+        }
+    }
+}
+
+// 5. Smart Input Suggestions
+function initSmartSuggestions() {
+    const chatInput = document.getElementById('chatInput');
+    if (!chatInput) return;
+    
+    const suggestionsDiv = document.createElement('div');
+    suggestionsDiv.id = 'suggestionsDropdown';
+    suggestionsDiv.className = 'suggestions-dropdown';
+    chatInput.parentElement.appendChild(suggestionsDiv);
+}
+
+function showSmartSuggestions(input) {
+    if (!smartSuggestionsEnabled || !input || input.length < 2) {
+        hideSuggestions();
+        return;
+    }
+    
+    const suggestions = getSuggestions(input);
+    const dropdown = document.getElementById('suggestionsDropdown');
+    if (!dropdown) return;
+    
+    if (suggestions.length === 0) {
+        hideSuggestions();
+        return;
+    }
+    
+    dropdown.innerHTML = '';
+    suggestions.forEach(suggestion => {
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
+        item.innerHTML = suggestion.replace(new RegExp(input, 'gi'), `<strong>$&</strong>`);
+        item.onclick = () => {
+            document.getElementById('chatInput').value = suggestion;
+            hideSuggestions();
+            document.getElementById('chatInput').focus();
+        };
+        dropdown.appendChild(item);
+    });
+    
+    dropdown.classList.add('visible');
+}
+
+function hideSuggestions() {
+    const dropdown = document.getElementById('suggestionsDropdown');
+    if (dropdown) {
+        dropdown.classList.remove('visible');
+    }
+}
+
+function getSuggestions(input) {
+    const commonQuestions = [
+        'What is your experience with Django?',
+        'Tell me about your AI projects.',
+        'Where did you study?',
+        'How would you approach building a scalable API?',
+        'What are your strongest technical skills?',
+        'Tell me about your work experience.',
+        'What programming languages do you know?',
+        'Describe your Python projects.',
+        'What is your experience with machine learning?',
+        'Tell me about your education background.'
+    ];
+    
+    const lowerInput = input.toLowerCase();
+    return commonQuestions
+        .filter(q => q.toLowerCase().includes(lowerInput))
+        .slice(0, 5);
+}
+
+// 6. Optimized Streaming (batch updates)
+let streamingBuffer = '';
+let streamingUpdateTimeout = null;
+
+function updateStreamingMessage(content, messageContent) {
+    streamingBuffer = content;
+    
+    // Clear existing timeout
+    if (streamingUpdateTimeout) {
+        clearTimeout(streamingUpdateTimeout);
+    }
+    
+    // Batch updates every 50ms instead of every character
+    streamingUpdateTimeout = setTimeout(() => {
+        messageContent.innerHTML = markdownToHtml(streamingBuffer);
+        scrollToBottom();
+        streamingBuffer = '';
+    }, 50);
+}
+
+// 7. Initialize Settings
+function initSettings() {
+    // Load settings from localStorage
+    const autoScrollToggle = document.getElementById('autoScrollToggle');
+    const typingIndicatorToggle = document.getElementById('typingIndicatorToggle');
+    const smartSuggestionsToggle = document.getElementById('smartSuggestionsToggle');
+    
+    if (autoScrollToggle) {
+        autoScrollToggle.checked = autoScrollEnabled;
+        autoScrollToggle.addEventListener('change', (e) => {
+            autoScrollEnabled = e.target.checked;
+            localStorage.setItem('autoScroll', autoScrollEnabled);
+        });
+    }
+    
+    if (typingIndicatorToggle) {
+        typingIndicatorToggle.checked = typingIndicatorEnabled;
+        typingIndicatorToggle.addEventListener('change', (e) => {
+            typingIndicatorEnabled = e.target.checked;
+            localStorage.setItem('typingIndicator', typingIndicatorEnabled);
+        });
+    }
+    
+    if (smartSuggestionsToggle) {
+        smartSuggestionsToggle.checked = smartSuggestionsEnabled;
+        smartSuggestionsToggle.addEventListener('change', (e) => {
+            smartSuggestionsEnabled = e.target.checked;
+            localStorage.setItem('smartSuggestions', smartSuggestionsEnabled);
+            if (smartSuggestionsEnabled) {
+                initSmartSuggestions();
+            } else {
+                hideSuggestions();
+            }
+        });
+    }
+    
+    // Sync dark mode toggle
+    const settingsDarkModeToggle = document.getElementById('settingsDarkModeToggle');
+    if (settingsDarkModeToggle) {
+        settingsDarkModeToggle.addEventListener('click', toggleDarkMode);
+    }
+}
+
+// Update addMessageToChat to include message ID and reactions
+function addMessageToChat(role, content, messageId = null) {
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role} fade-in`;
+    
+    if (!messageId) {
+        messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+    messageDiv.setAttribute('data-message-id', messageId);
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.textContent = role === 'user' ? '👤' : '🤖';
+    
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    messageContent.innerHTML = markdownToHtml(content);
+    
+    messageDiv.appendChild(avatar);
+    messageDiv.appendChild(messageContent);
+    chatMessages.appendChild(messageDiv);
+    
+    // Add reaction buttons for assistant messages
+    if (role === 'assistant') {
+        setTimeout(() => addReactionButtons(messageId), 500);
+    }
+    
+    scrollToBottom();
+    return messageId;
 }
