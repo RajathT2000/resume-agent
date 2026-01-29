@@ -22,7 +22,13 @@ let chatHistoryIndex = -1; // For arrow key navigation
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     const welcomeForm = document.getElementById('welcomeForm');
-    welcomeForm.addEventListener('submit', handleWelcomeSubmit);
+    if (welcomeForm) {
+        welcomeForm.addEventListener('submit', handleWelcomeSubmit);
+        // Also prevent default form behavior
+        welcomeForm.onsubmit = function(e) {
+            return handleWelcomeSubmit(e);
+        };
+    }
     
     const chatInput = document.getElementById('chatInput');
     chatInput.addEventListener('keypress', handleKeyPress);
@@ -69,13 +75,30 @@ function animateOnLoad() {
 
 // Welcome Modal Handler
 function handleWelcomeSubmit(e) {
-    e.preventDefault();
-    visitorName = document.getElementById('visitorName').value || "Guest";
-    visitorCompany = document.getElementById('visitorCompany').value || "Unknown";
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    visitorName = document.getElementById('visitorName').value.trim() || "Guest";
+    visitorCompany = document.getElementById('visitorCompany').value.trim() || "Unknown";
+    
+    // Validate inputs
+    if (!visitorName || visitorName === "Guest") {
+        alert('Please enter your name');
+        return false;
+    }
     
     // Hide modal, show main app
-    document.getElementById('welcomeModal').classList.add('hidden');
+    const modal = document.getElementById('welcomeModal');
     const mainApp = document.getElementById('mainApp');
+    
+    if (!modal || !mainApp) {
+        console.error('Modal or mainApp element not found');
+        return false;
+    }
+    
+    modal.classList.add('hidden');
     mainApp.classList.remove('hidden');
     
     // Animate main app appearance
@@ -85,7 +108,9 @@ function handleWelcomeSubmit(e) {
     
     // Update welcome banner
     const welcomeText = document.getElementById('welcomeText');
-    welcomeText.textContent = `👋 Welcome ${visitorName} from ${visitorCompany}! 🎉`;
+    if (welcomeText) {
+        welcomeText.textContent = `👋 Welcome ${visitorName} from ${visitorCompany}! 🎉`;
+    }
     
     // Load shared analysis if URL has parameters
     loadSharedAnalysis();
@@ -95,6 +120,8 @@ function handleWelcomeSubmit(e) {
     
     // Add welcome message to chat
     addWelcomeMessage();
+    
+    return false;
 }
 
 // Switch Tabs
