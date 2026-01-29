@@ -23,11 +23,24 @@ let chatHistoryIndex = -1; // For arrow key navigation
 document.addEventListener('DOMContentLoaded', function() {
     const welcomeForm = document.getElementById('welcomeForm');
     if (welcomeForm) {
+        console.log('Welcome form found, attaching handlers');
         welcomeForm.addEventListener('submit', handleWelcomeSubmit);
-        // Also prevent default form behavior
         welcomeForm.onsubmit = function(e) {
+            console.log('onsubmit triggered');
             return handleWelcomeSubmit(e);
         };
+        
+        // Also attach to button click as backup
+        const submitBtn = welcomeForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Button clicked');
+                handleWelcomeSubmit(e);
+            });
+        }
+    } else {
+        console.error('Welcome form not found!');
     }
     
     const chatInput = document.getElementById('chatInput');
@@ -75,30 +88,44 @@ function animateOnLoad() {
 
 // Welcome Modal Handler
 function handleWelcomeSubmit(e) {
+    console.log('Form submitted!', e);
+    
     if (e) {
         e.preventDefault();
         e.stopPropagation();
     }
     
-    visitorName = document.getElementById('visitorName').value.trim() || "Guest";
-    visitorCompany = document.getElementById('visitorCompany').value.trim() || "Unknown";
+    const nameInput = document.getElementById('visitorName');
+    const companyInput = document.getElementById('visitorCompany');
     
-    // Validate inputs
-    if (!visitorName || visitorName === "Guest") {
-        alert('Please enter your name');
+    if (!nameInput || !companyInput) {
+        console.error('Input fields not found');
         return false;
     }
+    
+    visitorName = nameInput.value.trim() || "Guest";
+    visitorCompany = companyInput.value.trim() || "Unknown";
+    
+    console.log('Visitor:', visitorName, 'Company:', visitorCompany);
     
     // Hide modal, show main app
     const modal = document.getElementById('welcomeModal');
     const mainApp = document.getElementById('mainApp');
     
-    if (!modal || !mainApp) {
-        console.error('Modal or mainApp element not found');
+    if (!modal) {
+        console.error('Modal element not found');
         return false;
     }
     
+    if (!mainApp) {
+        console.error('MainApp element not found');
+        return false;
+    }
+    
+    console.log('Hiding modal, showing main app');
+    modal.style.display = 'none';
     modal.classList.add('hidden');
+    mainApp.style.display = 'block';
     mainApp.classList.remove('hidden');
     
     // Animate main app appearance
