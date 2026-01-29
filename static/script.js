@@ -1258,12 +1258,6 @@ function addMessageToChat(role, content, messageId = null, timestamp = null) {
     messageContent.className = 'message-content';
     messageContent.innerHTML = markdownToHtml(content);
     
-    // Add timestamp
-    const timestampDiv = document.createElement('div');
-    timestampDiv.className = 'message-timestamp';
-    timestampDiv.textContent = formatTimestamp(timestamp);
-    timestampDiv.title = new Date(timestamp).toLocaleString();
-    
     // Add edit/delete buttons for user messages
     if (role === 'user') {
         const actionsDiv = document.createElement('div');
@@ -1282,6 +1276,12 @@ function addMessageToChat(role, content, messageId = null, timestamp = null) {
         actionsDiv.appendChild(deleteBtn);
         messageWrapper.appendChild(actionsDiv);
     }
+    
+    // Add timestamp
+    const timestampDiv = document.createElement('div');
+    timestampDiv.className = 'message-timestamp';
+    timestampDiv.textContent = formatTimestamp(timestamp);
+    timestampDiv.title = new Date(timestamp).toLocaleString();
     
     messageWrapper.appendChild(messageContent);
     messageWrapper.appendChild(timestampDiv);
@@ -1665,18 +1665,14 @@ function stopSpeaking() {
     currentSpeech = null;
 }
 
-// Auto-speak new assistant messages if TTS is enabled
-function addMessageToChatWithTTS(role, content, messageId = null, timestamp = null) {
-    const id = addMessageToChat(role, content, messageId, timestamp);
-    
-    if (textToSpeechEnabled && role === 'assistant' && 'speechSynthesis' in window) {
-        setTimeout(() => {
-            speakText(content);
-        }, 500);
+// Click outside to close export menu
+document.addEventListener('click', (e) => {
+    const exportMenu = document.getElementById('exportMenu');
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportMenu && exportBtn && !exportMenu.contains(e.target) && !exportBtn.contains(e.target)) {
+        exportMenu.classList.add('hidden');
     }
-    
-    return id;
-}
+});
 
 // Format timestamp
 function formatTimestamp(timestamp) {
